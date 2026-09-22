@@ -4,6 +4,7 @@ import type {
   BookConsultationPayload,
   Consultant,
   ConsultationBooking,
+  ConsultationHistory,
   ConsultationDay
 } from '../types/consultation.types'
 import { mockConsultationApi } from './consultation.mock'
@@ -23,7 +24,13 @@ const ConsultationApi = {
   /** Lịch trống 7 ngày tới, đã đánh dấu slot kín (mục VIII.2). */
   getAvailability: (consultantId: string) => http.get<ConsultationDay[]>(`/consultants/${consultantId}/availability`),
 
-  bookConsultation: (payload: BookConsultationPayload) => http.post<ConsultationBooking>('/consultations', payload)
+  bookConsultation: (payload: BookConsultationPayload) => http.post<ConsultationBooking>('/consultations', payload),
+
+  /** Lịch sử và hạn mức tư vấn của tài khoản hiện tại. */
+  getMyBookings: () => http.get<ConsultationHistory>('/me/consultations'),
+
+  /** Khách tự hủy lịch; backend quyết định có hoàn lượt theo mốc 24 giờ hay không. */
+  cancelMyBooking: (bookingId: string) => http.patch<ConsultationHistory>(`/me/consultations/${bookingId}/cancel`, {})
 }
 
 export const consultationApi = env.NEXT_PUBLIC_USE_MOCK_API ? mockConsultationApi : ConsultationApi

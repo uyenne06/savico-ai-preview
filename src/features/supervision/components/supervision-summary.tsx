@@ -32,13 +32,13 @@ export function SupervisionSummary({ projectId }: SupervisionSummaryProps) {
 
   const { data: project, isPending } = useSupervisionProject(projectId)
 
-  if (isPending) return <Skeleton className='h-64 rounded-2xl' />
+  if (isPending) return <Skeleton className='h-64 rounded-xl' />
 
   // Dự án chưa mua gói: R8 — chỗ này là nút "Chọn cách quản lý thi công", link
   // thẳng tới tab Gói giám sát chứ không mở popup.
   if (!project) {
     return (
-      <section className='bg-card space-y-3 rounded-2xl border border-dashed p-4'>
+      <section className='bg-card space-y-3 rounded-xl border border-dashed p-4'>
         <p className='text-muted-foreground text-sm text-pretty'>{t('selfManaged')}</p>
         <Button asChild variant='outline' className='w-full'>
           <Link href={ROUTES.PLANS_SUPERVISION}>{t('chooseManagement')}</Link>
@@ -54,7 +54,7 @@ export function SupervisionSummary({ projectId }: SupervisionSummaryProps) {
   const inspections = Math.round((project.inspectionsUsed / project.inspectionsTotal) * 100)
 
   return (
-    <section className='border-brand-orange/40 bg-brand-orange-soft/50 rounded-2xl border p-4'>
+    <section className='border-brand-orange/40 bg-brand-orange-soft/50 rounded-xl border p-4'>
       <h2 className='text-brand-orange text-[11px] font-semibold tracking-wide uppercase'>{t('title')}</h2>
 
       <div className='mt-3 flex items-start gap-3'>

@@ -27,8 +27,13 @@ export const ROUTES = {
   // Thiết kế & Dự toán — luồng 3 bước (screens 4–10)
   DESIGN: '/design',
 
-  // Account (screen 11 + S24)
-  ACCOUNT: '/account'
+  // Account (screen 11 + S24) — mỗi khu lớn có URL riêng để bookmark/reload/back-forward đúng màn.
+  ACCOUNT: '/account',
+  ACCOUNT_PROJECTS: '/account/projects',
+  ACCOUNT_FAVORITES: '/account/favorites',
+  ACCOUNT_DOSSIERS: '/account/dossiers',
+  ACCOUNT_PURCHASES: '/account/purchases',
+  ACCOUNT_CONSULTATIONS: '/account/consultations'
 } as const
 
 export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES]
@@ -102,6 +107,9 @@ export const handbookArticleRoute = (slug: string) => `${ROUTES.HANDBOOK}/bai-vi
 
 /** Hồ sơ một kiến trúc sư + khối chọn khung giờ tư vấn (mục VIII.2). */
 export const consultantRoute = (consultantId: string) => `${ROUTES.CONSULT}/${consultantId}`
+
+/** Mở trang Thiết kế & Dự toán và tự bật modal "Tạo dự án mới". */
+export const designCreateRoute = () => `${ROUTES.DESIGN}?createProject=1`
 
 /** Bước 1 — Nhập liệu. */
 export const designInputRoute = (projectId: string) => `${ROUTES.DESIGN}/${projectId}/input`

@@ -14,6 +14,7 @@ export const QR_TTL_MINUTES = 15
  * giảm giá" ở S03 có thứ để kiểm tra.
  */
 export const DISCOUNT_CODES: Record<string, number> = {
+  SAVI10: 10,
   KHAITRUONG: 15
 }
 

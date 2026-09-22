@@ -33,6 +33,10 @@ interface StartOptionsProps {
   onTurnkeySelect?: () => void
   /** Hộp thoại render progress ở lớp ngoài vì nội dung sẽ unmount ngay khi đóng. */
   showRouteProgress?: boolean
+  /** Choreography riêng của S08: trái → giữa → phải, badge/đặc quyền đứng yên. */
+  completionMode?: boolean
+  /** Cho phép lớp gọi bỏ entrance khi quay lại bằng Back/Forward trong cùng document. */
+  animateEntrance?: boolean
 }
 
 /**
@@ -53,7 +57,9 @@ export function StartOptions({
   hasPlan = false,
   onNavigateStart,
   onTurnkeySelect,
-  showRouteProgress = true
+  showRouteProgress = true,
+  completionMode = false,
+  animateEntrance = true
 }: StartOptionsProps) {
   // Quà tặng lấy từ kho nội dung (gói nào có quà thì dùng gói đó) — admin sửa
   // một chỗ là cả S01, S02 lẫn thẻ này đổi theo.
@@ -103,9 +109,11 @@ export function StartOptions({
               onNavigateStart={startNavigation}
             />
           }
-          revealDelay={0.15}
+          revealDelay={completionMode ? 1.95 : 0.15}
+          completionMode={completionMode}
+          animateEntrance={animateEntrance}
           hovered={hoveredIndex === 1}
-          dimmed={hoveredIndex !== null && hoveredIndex !== 1}
+          dimmed={!completionMode && hoveredIndex !== null && hoveredIndex !== 1}
           onHoverChange={(active) => setHoveredIndex(active ? 1 : null)}
         />
 
@@ -130,10 +138,12 @@ export function StartOptions({
               <TurnkeyRequestDialog open={turnkeyOpen} onOpenChange={setTurnkeyOpen} />
             </>
           }
-          // Hiện TRƯỚC hai thẻ kia (mục 3): không delay.
-          revealDelay={0}
+          // S11 giữ thứ tự cũ; riêng S08 theo yêu cầu mới: trái → giữa → phải.
+          revealDelay={completionMode ? 2.12 : 0}
+          completionMode={completionMode}
+          animateEntrance={animateEntrance}
           hovered={hoveredIndex === 2}
-          dimmed={hoveredIndex !== null && hoveredIndex !== 2}
+          dimmed={!completionMode && hoveredIndex !== null && hoveredIndex !== 2}
           onHoverChange={(active) => setHoveredIndex(active ? 2 : null)}
         />
 
@@ -151,9 +161,11 @@ export function StartOptions({
                 ? t('expert.priceFrom', { price: formatCurrency(consultationPrice, locale) })
                 : t('expert.viewPricing')
           }
-          revealDelay={0.15}
+          revealDelay={completionMode ? 2.29 : 0.15}
+          completionMode={completionMode}
+          animateEntrance={animateEntrance}
           hovered={hoveredIndex === 3}
-          dimmed={hoveredIndex !== null && hoveredIndex !== 3}
+          dimmed={!completionMode && hoveredIndex !== null && hoveredIndex !== 3}
           onHoverChange={(active) => setHoveredIndex(active ? 3 : null)}
           action={
             // Hình S08: nút của Lựa chọn 3 là nút VIỀN XANH, chữ xanh (không phải
@@ -198,6 +210,7 @@ function OptionButton({
   // có độ trễ điều hướng nào để che.
   const [navigating, setNavigating] = useState(false)
   const actionTimerRef = useRef<number | null>(null)
+  const actionLockRef = useRef(false)
 
   useEffect(
     () => () => {
@@ -219,7 +232,7 @@ function OptionButton({
   // `px-10` giữ chỗ cho mũi tên ở cả HAI bên: chữ canh giữa nên chỉ chừa lề
   // phải thì nhãn dài (bản EN "Register for full delivery") sẽ đè lên mũi tên.
   const classes = cn(
-    'group relative h-12 w-full justify-center px-10 text-sm font-bold tracking-wide uppercase',
+    'group relative h-12 w-full justify-center px-10 text-sm font-bold tracking-wide uppercase transition-[transform,filter,box-shadow] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 active:scale-[0.985] motion-reduce:transform-none motion-reduce:transition-none',
     className
   )
 
@@ -230,7 +243,12 @@ function OptionButton({
         variant={variant}
         className={classes}
         aria-busy={navigating}
-        onClick={() => {
+        onClick={(event) => {
+          if (actionLockRef.current) {
+            event.preventDefault()
+            return
+          }
+          actionLockRef.current = true
           setNavigating(true)
           onClick?.()
           onNavigateStart?.()
@@ -248,15 +266,19 @@ function OptionButton({
       disabled={navigating}
       aria-busy={navigating}
       onClick={() => {
+        if (actionLockRef.current) return
+        actionLockRef.current = true
         setNavigating(true)
         if (!deferAction) {
           onClick?.()
           setNavigating(false)
+          actionLockRef.current = false
           return
         }
         actionTimerRef.current = window.setTimeout(() => {
           onClick?.()
           setNavigating(false)
+          actionLockRef.current = false
         }, 180)
       }}
     >
@@ -448,6 +470,8 @@ function OptionCard({
   value,
   highlighted = false,
   revealDelay = 0,
+  completionMode = false,
+  animateEntrance = true,
   hovered = false,
   dimmed = false,
   onHoverChange
@@ -465,6 +489,8 @@ function OptionCard({
   highlighted?: boolean
   /** Thứ tự hiện: thẻ giữa trước, rồi trái, rồi phải (mục 3/4). */
   revealDelay?: number
+  completionMode?: boolean
+  animateEntrance?: boolean
   /** Đang được rê tới (mục 3/4) — nâng nhẹ + viền màu + bóng rộng. */
   hovered?: boolean
   /** MỘT thẻ khác đang được rê — thẻ này mờ đi + lùi nhẹ (mục 3/4). */
@@ -479,11 +505,15 @@ function OptionCard({
     // Thẻ hiện lần lượt lúc mở (mục 3/4) — CHỈ MỘT LẦN lúc mount, tách khỏi
     // hiệu ứng rê bên dưới để không bị chồng thời lượng lên nhau.
     <motion.li
-      initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+      initial={reduceMotion || !animateEntrance ? false : { opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : revealDelay, ease: revealEase }}
+      transition={{
+        duration: reduceMotion || !animateEntrance ? 0 : 0.5,
+        delay: reduceMotion || !animateEntrance ? 0 : revealDelay,
+        ease: revealEase
+      }}
       // Mobile: thẻ phổ biến nhất lên đầu (mục 4); máy tính giữ đúng thứ tự cột.
-      className={cn('relative flex', highlighted && 'order-first md:order-none')}
+      className={cn('relative flex', highlighted && !completionMode && 'order-first md:order-none')}
     >
       {/* Nâng nhẹ khi rê tới, mờ + lùi khi MỘT thẻ khác đang được rê (mục 3/4). */}
       <motion.div
@@ -505,12 +535,17 @@ function OptionCard({
           nhô lên khỏi mép thẻ 4px = 8px. */}
         {highlighted ? (
           <motion.span
-            initial={reduceMotion ? false : { opacity: 0, y: -14 }}
+            initial={reduceMotion || !animateEntrance ? false : { opacity: 0, y: -14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={
-              reduceMotion
+              reduceMotion || !animateEntrance
                 ? { duration: 0 }
-                : { type: 'spring', bounce: 0.55, duration: 0.5, delay: revealDelay + 0.35 }
+                : {
+                    type: 'spring',
+                    bounce: 0.55,
+                    duration: 0.5,
+                    delay: completionMode ? 2.9 : revealDelay + 0.35
+                  }
             }
             className='bg-brand-orange text-brand-orange-foreground absolute -top-2 left-1/2 z-10 inline-flex -translate-x-1/2 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-bold tracking-wide whitespace-nowrap uppercase'
           >
@@ -571,8 +606,18 @@ function OptionCard({
               chặn `max-h-[40%]` — bỏ chặn thì thẻ 3 phình thành khung dọc. */}
           <div className='bg-muted/30 mt-3 flex aspect-[4/3] max-h-[40%] w-full grow items-center justify-center rounded-xl border border-dashed'>
             <motion.span
-              animate={reduceMotion ? undefined : { y: [0, -3, 0] }}
-              transition={{ duration: 4.8, delay: index * 0.25, repeat: Infinity, ease: 'easeInOut' }}
+              animate={
+                completionMode
+                  ? { y: reduceMotion ? 0 : hovered ? -4 : 0 }
+                  : reduceMotion
+                    ? undefined
+                    : { y: [0, -3, 0] }
+              }
+              transition={
+                completionMode
+                  ? { duration: reduceMotion ? 0 : 0.22, ease: revealEase }
+                  : { duration: 4.8, delay: index * 0.25, repeat: Infinity, ease: 'easeInOut' }
+              }
             >
               <Icon className='text-muted-foreground/50 size-8' />
             </motion.span>
@@ -585,11 +630,11 @@ function OptionCard({
             {points.map((point, pointIndex) => (
               <motion.li
                 key={point}
-                initial={reduceMotion ? false : { opacity: 0, x: -8 }}
+                initial={reduceMotion || completionMode || !animateEntrance ? false : { opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{
-                  duration: reduceMotion ? 0 : 0.35,
-                  delay: reduceMotion ? 0 : revealDelay + 0.4 + pointIndex * 0.08
+                  duration: reduceMotion || completionMode || !animateEntrance ? 0 : 0.35,
+                  delay: reduceMotion || completionMode || !animateEntrance ? 0 : revealDelay + 0.4 + pointIndex * 0.08
                 }}
                 className='flex items-start gap-2.5 text-sm'
               >
@@ -608,11 +653,12 @@ function OptionCard({
 
           {value ? (
             <motion.p
-              initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+              initial={reduceMotion || completionMode || !animateEntrance ? false : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
-                duration: reduceMotion ? 0 : 0.35,
-                delay: reduceMotion ? 0 : revealDelay + 0.45 + points.length * 0.08
+                duration: reduceMotion || completionMode || !animateEntrance ? 0 : 0.35,
+                delay:
+                  reduceMotion || completionMode || !animateEntrance ? 0 : revealDelay + 0.45 + points.length * 0.08
               }}
               className={cn(
                 'mt-4 flex min-h-9 items-center justify-center gap-2 rounded-lg px-3 py-2 text-center text-xs font-semibold',
@@ -621,10 +667,10 @@ function OptionCard({
             >
               {included ? (
                 <motion.span
-                  initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
+                  initial={reduceMotion || completionMode || !animateEntrance ? false : { scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={
-                    reduceMotion
+                    reduceMotion || completionMode || !animateEntrance
                       ? { duration: 0 }
                       : { type: 'spring', stiffness: 420, damping: 18, delay: revealDelay + 0.55 }
                   }
@@ -641,19 +687,24 @@ function OptionCard({
             nghiêng chạy hết bề ngang khối. */}
           {gift ? (
             <motion.section
-              initial={{ opacity: 0, y: 10 }}
+              data-completion-exclusive={completionMode ? 'true' : undefined}
+              initial={completionMode || !animateEntrance ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: revealDelay + 0.4 + points.length * 0.08 }}
+              transition={{
+                duration: completionMode || !animateEntrance ? 0 : 0.4,
+                delay: completionMode || !animateEntrance ? 0 : revealDelay + 0.4 + points.length * 0.08
+              }}
               className='bg-brand-orange-soft/70 relative mt-4 overflow-hidden rounded-xl p-3'
             >
-              {/* Vệt sáng chéo lướt qua, lặp thưa rồi dừng (mục 5). */}
-              <motion.span
-                aria-hidden
-                initial={{ x: '-120%' }}
-                animate={{ x: '320%' }}
-                transition={{ duration: 1.3, ease: 'easeInOut', delay: 1.4, repeat: 2, repeatDelay: 3 }}
-                className='pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/50 to-transparent'
-              />
+              {completionMode ? null : (
+                <motion.span
+                  aria-hidden
+                  initial={{ x: '-120%' }}
+                  animate={{ x: '320%' }}
+                  transition={{ duration: 1.3, ease: 'easeInOut', delay: 1.4, repeat: 2, repeatDelay: 3 }}
+                  className='pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/50 to-transparent'
+                />
+              )}
               <div className='flex items-start gap-3'>
                 {/* CHỖ CHỜ ASSET: hộp quà 3D của khách. */}
                 <Gift className='text-brand-orange mt-0.5 size-10 shrink-0' strokeWidth={1.75} />

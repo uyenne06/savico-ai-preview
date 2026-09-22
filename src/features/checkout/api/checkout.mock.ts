@@ -59,7 +59,7 @@ function transferInfo(orderId: string, amount: number): TransferInfo {
     content,
     // Chuỗi QR mô phỏng: đủ thông tin để quét ra nội dung đúng khi soi bằng mắt,
     // không phải chuẩn VietQR thật.
-    qrPayload: `SAVICO|VCB|10286688999|${amount}|${content}`
+    qrPayload: `SAVICO|VCB|10286688999|${amount}|${content}|${Date.now()}`
   }
 }
 
@@ -168,7 +168,7 @@ export const mockCheckoutApi = {
     const order = store.orders[orderId]
     if (!order) throw new Error(`Mock: không tìm thấy đơn hàng ${orderId}`)
 
-    const updated: Order = { ...order, status: 'verifying' }
+    const updated: Order = { ...order, status: 'verifying', verifyingStartedAt: new Date().toISOString() }
     store.orders[orderId] = updated
     store.transferredAt[orderId] = Date.now()
     saveStore(store)
@@ -187,6 +187,7 @@ export const mockCheckoutApi = {
       expiresAt: expiryFromNow(),
       transfer: transferInfo(order.id, order.total)
     }
+    delete updated.verifyingStartedAt
     store.orders[orderId] = updated
     delete store.transferredAt[orderId]
     saveStore(store)

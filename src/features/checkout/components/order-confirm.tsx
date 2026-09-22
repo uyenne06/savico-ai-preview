@@ -1,11 +1,23 @@
 'use client'
 
-import { CheckCircle2, FileText, Info, Palette, QrCode, RotateCcw, ShieldCheck, SquarePen } from 'lucide-react'
+import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import {
+  CheckCircle2,
+  FileText,
+  Info,
+  LoaderCircle,
+  Palette,
+  QrCode,
+  RotateCcw,
+  ShieldCheck,
+  SquarePen
+} from 'lucide-react'
 
 import { useLocale, useTranslations } from 'next-intl'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
-import { Link } from '@/i18n/navigation'
+import { Link, useRouter } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { useAuth } from '@/shared/auth'
 import { EmptyState } from '@/shared/components/common'
@@ -14,8 +26,11 @@ import { Checkbox } from '@/shared/components/ui/checkbox'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { Switch } from '@/shared/components/ui/switch'
-import { ROUTES } from '@/shared/constants/routes'
+import { ROUTES, supervisionPlansRoute } from '@/shared/constants/routes'
 import { useCmsCollection } from '@/shared/cms'
+import { usePageEntrance } from '@/shared/hooks'
+import { canReturnToCheckoutSource, clearCheckoutReturn } from '@/shared/lib/checkout-return'
+import { cn } from '@/shared/lib/utils'
 import { formatCurrency } from '@/shared/utils'
 import { DISCOUNT_CODES, REFUND_WINDOW_HOURS } from '../constants/checkout.constants'
 import { useCreateOrder } from '../hooks/use-checkout'
@@ -41,6 +56,28 @@ interface OrderConfirmProps {
 /** Hình S03: icon của ba dòng quyền lợi trong thẻ đơn hàng, theo đúng thứ tự. */
 const BENEFIT_ICONS = [Palette, SquarePen, FileText] as const
 
+function AnimatedCheckoutTotal({ value, locale }: { value: number; locale: Locale }) {
+  const reduceMotion = Boolean(useReducedMotion())
+  const number = useMotionValue(value)
+  const formatted = useTransform(number, (current) => formatCurrency(Math.round(current), locale))
+
+  useEffect(() => {
+    if (reduceMotion) {
+      number.set(value)
+      return
+    }
+    const controls = animate(number, value, { duration: 0.56, ease: [0.22, 1, 0.36, 1] })
+    return () => controls.stop()
+  }, [number, reduceMotion, value])
+
+  return (
+    <>
+      <span className='sr-only'>{formatCurrency(value, locale)}</span>
+      <motion.span aria-hidden>{formatted}</motion.span>
+    </>
+  )
+}
+
 export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) {
   const t = useTranslations('checkout.confirm')
   const tPlans = useTranslations('plans.tiers')
@@ -49,10 +86,11 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
   const tSupervision = useTranslations('supervision.tiers')
   const locale = useLocale() as Locale
   const { user } = useAuth()
+  const router = useRouter()
+  const reduceMotion = Boolean(useReducedMotion())
 
   const plans = useCmsCollection('plans')
   const supervisionPackages = useCmsCollection('supervisionPackages')
-  const createOrder = useCreateOrder()
 
   const product = useMemo(() => {
     if (kind === 'design') {
@@ -85,6 +123,48 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
       : null
   }, [kind, productId, plans, supervisionPackages, tPlans, tPlanTags, tSupervision])
 
+  const { rootRef, entranceState, entranceStyle } = usePageEntrance(`checkout.confirm.${kind}.${productId}`, {
+    enabled: Boolean(product),
+    offsetMs: 90,
+    replayOnMount: true,
+    settleAfterMs: 2200
+  })
+  const buyerNameRef = useRef<HTMLInputElement>(null)
+  const invoiceCompanyRef = useRef<HTMLInputElement>(null)
+  const discountInputRef = useRef<HTMLInputElement>(null)
+  const termsRef = useRef<HTMLLabelElement>(null)
+  const codeTimerRef = useRef<number | null>(null)
+  const codeRequestRef = useRef(0)
+  const backNavigationRef = useRef(false)
+
+  const beforePaymentNavigate = useCallback(async () => {
+    clearCheckoutReturn()
+    const root = rootRef.current
+    if (!root || reduceMotion) return
+    const body = Array.from(root.querySelectorAll<HTMLElement>('[data-checkout-confirm-transition]'))
+    if (body.length === 0) return
+
+    await Promise.all(
+      body.map((element, index) =>
+        element
+          .animate(
+            [
+              { opacity: 1, transform: 'translateX(0)' },
+              { opacity: 0, transform: 'translateX(-12px)' }
+            ],
+            {
+              duration: 160,
+              delay: index * 18,
+              easing: 'cubic-bezier(0.4, 0, 1, 1)',
+              fill: 'forwards'
+            }
+          )
+          .finished.catch(() => undefined)
+      )
+    )
+  }, [reduceMotion, rootRef])
+  const createOrder = useCreateOrder({ beforeNavigate: beforePaymentNavigate })
+
   const [buyer, setBuyer] = useState({
     name: user?.name ?? '',
     phone: user?.phone ?? '',
@@ -95,7 +175,60 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
   const [codeInput, setCodeInput] = useState('')
   const [applied, setApplied] = useState<{ code: string; percent: number } | null>(null)
   const [codeError, setCodeError] = useState(false)
+  const [codePending, setCodePending] = useState(false)
   const [agreed, setAgreed] = useState(false)
+  const [termsError, setTermsError] = useState(false)
+
+  useEffect(
+    () => () => {
+      if (codeTimerRef.current) window.clearTimeout(codeTimerRef.current)
+    },
+    []
+  )
+
+  const shake = useCallback(
+    (element: HTMLElement | null) => {
+      if (!element || reduceMotion) return
+      element.animate(
+        [
+          { transform: 'translateX(0)' },
+          { transform: 'translateX(-6px)' },
+          { transform: 'translateX(5px)' },
+          { transform: 'translateX(-3px)' },
+          { transform: 'translateX(0)' }
+        ],
+        { duration: 320, easing: 'ease-out' }
+      )
+    },
+    [reduceMotion]
+  )
+
+  const backToPlan = useCallback(() => {
+    if (backNavigationRef.current) return
+    backNavigationRef.current = true
+    const fallback = kind === 'supervision' && projectId ? supervisionPlansRoute(projectId) : ROUTES.PLANS
+    const finish = () => {
+      if (canReturnToCheckoutSource(productId, projectId)) {
+        clearCheckoutReturn()
+        router.back()
+      } else {
+        router.push(fallback)
+      }
+    }
+    const root = rootRef.current
+    if (!root || reduceMotion) {
+      finish()
+      return
+    }
+    const exit = root.animate(
+      [
+        { opacity: 1, transform: 'translateX(0)' },
+        { opacity: 0.82, transform: 'translateX(28px)' }
+      ],
+      { duration: 220, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' }
+    )
+    void exit.finished.then(finish).catch(finish)
+  }, [kind, productId, projectId, reduceMotion, rootRef, router])
 
   if (!product) {
     return (
@@ -114,19 +247,46 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
 
   const discountAmount = applied ? Math.round((product.price * applied.percent) / 100) : 0
   const total = product.price - discountAmount
+  const planBackHref = kind === 'supervision' && projectId ? supervisionPlansRoute(projectId) : ROUTES.PLANS
 
   const applyCode = () => {
-    const percent = DISCOUNT_CODES[codeInput.trim().toUpperCase()]
-    if (!percent) {
-      setApplied(null)
-      setCodeError(true)
+    if (codePending || applied) return
+    const normalized = codeInput.trim().toUpperCase()
+    if (!normalized) {
+      setCodeError(false)
+      shake(discountInputRef.current)
+      discountInputRef.current?.focus()
       return
     }
-    setApplied({ code: codeInput.trim().toUpperCase(), percent })
+
+    const requestId = ++codeRequestRef.current
+    setCodePending(true)
     setCodeError(false)
+    if (codeTimerRef.current) window.clearTimeout(codeTimerRef.current)
+    codeTimerRef.current = window.setTimeout(() => {
+      if (requestId !== codeRequestRef.current) return
+      const percent = DISCOUNT_CODES[normalized]
+      setCodePending(false)
+      if (!percent) {
+        setApplied(null)
+        setCodeError(true)
+        shake(discountInputRef.current)
+        discountInputRef.current?.focus()
+        return
+      }
+      setApplied({ code: normalized, percent })
+      setCodeError(false)
+      toast.success(t('discountToast', { percent, plan: product?.name ?? '' }))
+    }, 460)
   }
 
-  const submit = () =>
+  const submit = () => {
+    if (!agreed) {
+      setTermsError(true)
+      shake(termsRef.current)
+      toast.error(t('termsRequiredToast'))
+      return
+    }
     createOrder.mutate({
       productId,
       kind,
@@ -135,32 +295,53 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
       invoice: { enabled: invoiceOn, ...invoice },
       discountCode: applied?.code ?? ''
     })
+  }
 
   return (
-    <div className='mx-auto w-full max-w-6xl space-y-6 px-4 py-8 lg:px-8'>
-      <CheckoutSteps current='confirm' />
+    <div
+      ref={rootRef}
+      data-page-entrance={entranceState}
+      data-checkout-confirm-root
+      style={entranceStyle}
+      className='mx-auto w-full max-w-6xl space-y-6 px-4 py-8 lg:px-8'
+    >
+      <CheckoutSteps
+        current='confirm'
+        onCompletedStep={(step) => {
+          if (step === 'plan') backToPlan()
+        }}
+      />
 
-      <header className='space-y-1 pt-2'>
+      <header data-checkout-confirm-transition data-entrance-step='1' className='space-y-1 pt-2'>
         <h1 className='text-3xl font-bold tracking-tight sm:text-[2.25rem]'>{t('title')}</h1>
         <p className='text-muted-foreground text-base'>{t('subtitle')}</p>
       </header>
 
-      <div className='grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]'>
+      <div data-checkout-confirm-transition className='grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]'>
         <div className='min-w-0 space-y-5'>
-          <section className='bg-card rounded-2xl border p-5'>
+          <section data-entrance-step='2' className='bg-card rounded-2xl border p-5'>
             <div className='flex items-center justify-between gap-3'>
               <h2 className='text-lg font-semibold'>{t('buyerTitle')}</h2>
               {/* Hình S03: "Có thể chỉnh sửa" là chữ ĐEN (chỉ icon bút chì màu xanh). */}
-              <span className='text-foreground flex items-center gap-1.5 text-sm'>
+              <button
+                type='button'
+                onClick={() => {
+                  buyerNameRef.current?.focus()
+                  buyerNameRef.current?.select()
+                }}
+                className='text-foreground flex items-center gap-1.5 rounded-sm text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
+              >
                 <SquarePen className='text-primary size-4' />
                 {t('buyerEditable')}
-              </span>
+              </button>
             </div>
 
             <div className='mt-4 grid gap-4 sm:grid-cols-3'>
               <div className='space-y-2'>
                 <Label htmlFor='buyer-name'>{t('name')}</Label>
                 <Input
+                  ref={buyerNameRef}
+                  data-checkout-buyer-input
                   id='buyer-name'
                   value={buyer.name}
                   onChange={(event) => setBuyer({ ...buyer, name: event.target.value })}
@@ -169,6 +350,7 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
               <div className='space-y-2'>
                 <Label htmlFor='buyer-phone'>{t('phone')}</Label>
                 <Input
+                  data-checkout-buyer-input
                   id='buyer-phone'
                   inputMode='tel'
                   value={buyer.phone}
@@ -178,6 +360,7 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
               <div className='space-y-2'>
                 <Label htmlFor='buyer-email'>{t('email')}</Label>
                 <Input
+                  data-checkout-buyer-input
                   id='buyer-email'
                   inputMode='email'
                   value={buyer.email}
@@ -191,7 +374,7 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
 
           {/* R10 — chỉ QR chuyển khoản, nên đây là một khối thông tin chứ không
               phải một danh sách để chọn. */}
-          <section className='bg-card rounded-2xl border p-5'>
+          <section data-entrance-step='3' className='bg-card rounded-2xl border p-5'>
             <h2 className='text-lg font-semibold'>{t('paymentTitle')}</h2>
 
             <div className='border-primary bg-accent/40 mt-4 flex items-start gap-4 rounded-xl border p-4'>
@@ -213,67 +396,114 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
             </p>
           </section>
 
-          <section className='bg-card rounded-2xl border p-5'>
+          <section data-entrance-step='4' className='bg-card rounded-2xl border p-5'>
             <div className='flex items-start justify-between gap-4'>
               <div>
                 <h2 className='text-base font-semibold'>{t('invoiceTitle')}</h2>
                 <p className='text-muted-foreground text-sm'>{t('invoiceHint')}</p>
               </div>
-              <Switch checked={invoiceOn} onCheckedChange={setInvoiceOn} aria-label={t('invoiceTitle')} />
+              <Switch
+                data-checkout-invoice-switch
+                checked={invoiceOn}
+                onCheckedChange={(checked) => {
+                  setInvoiceOn(checked)
+                  if (checked) {
+                    window.requestAnimationFrame(() => {
+                      window.requestAnimationFrame(() => {
+                        invoiceCompanyRef.current?.focus()
+                      })
+                    })
+                  }
+                }}
+                aria-label={t('invoiceTitle')}
+              />
             </div>
 
-            {invoiceOn ? (
-              <div className='mt-4 grid gap-4 sm:grid-cols-2'>
-                <div className='space-y-2'>
-                  <Label htmlFor='invoice-company'>{t('company')}</Label>
-                  <Input
-                    id='invoice-company'
-                    value={invoice.company}
-                    onChange={(event) => setInvoice({ ...invoice, company: event.target.value })}
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='invoice-tax'>{t('taxCode')}</Label>
-                  <Input
-                    id='invoice-tax'
-                    value={invoice.taxCode}
-                    onChange={(event) => setInvoice({ ...invoice, taxCode: event.target.value })}
-                  />
-                </div>
-                <div className='space-y-2 sm:col-span-2'>
-                  <Label htmlFor='invoice-address'>{t('address')}</Label>
-                  <Input
-                    id='invoice-address'
-                    value={invoice.address}
-                    onChange={(event) => setInvoice({ ...invoice, address: event.target.value })}
-                  />
-                </div>
-                <div className='space-y-2 sm:col-span-2'>
-                  <Label htmlFor='invoice-email'>{t('invoiceEmail')}</Label>
-                  <Input
-                    id='invoice-email'
-                    inputMode='email'
-                    value={invoice.email}
-                    onChange={(event) => setInvoice({ ...invoice, email: event.target.value })}
-                  />
+            <div data-checkout-invoice-fields data-open={invoiceOn ? 'true' : 'false'} className='grid'>
+              <div className='overflow-hidden'>
+                <div className='mt-4 grid gap-4 border-t border-dashed pt-4 sm:grid-cols-2'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='invoice-company'>{t('company')}</Label>
+                    <Input
+                      ref={invoiceCompanyRef}
+                      id='invoice-company'
+                      disabled={!invoiceOn}
+                      value={invoice.company}
+                      onChange={(event) => setInvoice({ ...invoice, company: event.target.value })}
+                    />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='invoice-tax'>{t('taxCode')}</Label>
+                    <Input
+                      id='invoice-tax'
+                      disabled={!invoiceOn}
+                      value={invoice.taxCode}
+                      onChange={(event) => setInvoice({ ...invoice, taxCode: event.target.value })}
+                    />
+                  </div>
+                  <div className='space-y-2 sm:col-span-2'>
+                    <Label htmlFor='invoice-address'>{t('address')}</Label>
+                    <Input
+                      id='invoice-address'
+                      disabled={!invoiceOn}
+                      value={invoice.address}
+                      onChange={(event) => setInvoice({ ...invoice, address: event.target.value })}
+                    />
+                  </div>
+                  <div className='space-y-2 sm:col-span-2'>
+                    <Label htmlFor='invoice-email'>{t('invoiceEmail')}</Label>
+                    <Input
+                      id='invoice-email'
+                      inputMode='email'
+                      disabled={!invoiceOn}
+                      value={invoice.email}
+                      onChange={(event) => setInvoice({ ...invoice, email: event.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
-            ) : null}
+            </div>
           </section>
 
-          <label className='flex cursor-pointer items-start gap-2.5 text-sm'>
-            <Checkbox checked={agreed} onCheckedChange={(value) => setAgreed(value === true)} />
+          <label
+            ref={termsRef}
+            data-checkout-terms
+            data-error={termsError ? 'true' : 'false'}
+            data-entrance-step='5'
+            className='flex cursor-pointer items-start gap-2.5 rounded-lg px-2 py-1.5 text-sm transition-colors'
+          >
+            <Checkbox
+              data-checkout-terms-checkbox
+              checked={agreed}
+              onCheckedChange={(value) => {
+                const next = value === true
+                setAgreed(next)
+                if (next) setTermsError(false)
+              }}
+            />
             {/* Hình S03: hai cụm "Điều khoản sử dụng" và "Chính sách thanh toán"
                 là LIÊN KẾT màu xanh có gạch chân. */}
             <span className='text-pretty'>
               {t.rich('terms', {
                 terms: (chunks) => (
-                  <Link href={ROUTES.TERMS} className='text-primary underline underline-offset-4'>
+                  <Link
+                    href={ROUTES.TERMS}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    onClick={(event) => event.stopPropagation()}
+                    className='text-primary underline underline-offset-4'
+                  >
                     {chunks}
                   </Link>
                 ),
                 payment: (chunks) => (
-                  <Link href={ROUTES.PRIVACY} className='text-primary underline underline-offset-4'>
+                  <Link
+                    href={ROUTES.PRIVACY}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    onClick={(event) => event.stopPropagation()}
+                    className='text-primary underline underline-offset-4'
+                  >
                     {chunks}
                   </Link>
                 )
@@ -283,12 +513,20 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
         </div>
 
         {/* Cột phải dính theo cuộn. */}
-        <aside className='plan-order-enter lg:sticky lg:top-24 lg:self-start'>
+        <aside data-entrance-step='2' data-entrance-from='right' className='lg:sticky lg:top-24 lg:self-start'>
           <section className='bg-card rounded-2xl border p-5'>
             <div className='flex items-center justify-between gap-3'>
               <h2 className='text-base font-semibold'>{t('orderTitle')}</h2>
               {/* Hình S03: "Đổi gói" là liên kết CÓ GẠCH CHÂN. */}
-              <Link href={ROUTES.PLANS} className='text-primary text-sm font-medium underline underline-offset-4'>
+              <Link
+                href={planBackHref}
+                onClick={(event) => {
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+                  event.preventDefault()
+                  backToPlan()
+                }}
+                className='text-primary text-sm font-medium underline underline-offset-4'
+              >
                 {t('changePlan')}
               </Link>
             </div>
@@ -336,19 +574,44 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
               <Label htmlFor='discount'>{t('discountLabel')}</Label>
               <div className='flex gap-2'>
                 <Input
+                  ref={discountInputRef}
                   id='discount'
                   value={codeInput}
                   placeholder={t('discountPlaceholder')}
-                  onChange={(event) => setCodeInput(event.target.value)}
+                  aria-invalid={codeError || undefined}
+                  disabled={codePending}
+                  readOnly={Boolean(applied)}
+                  onChange={(event) => {
+                    setCodeInput(event.target.value.toUpperCase())
+                    if (codeError) setCodeError(false)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter') return
+                    event.preventDefault()
+                    applyCode()
+                  }}
                 />
-                <Button type='button' variant='outline' onClick={applyCode}>
-                  {t('apply')}
+                <Button
+                  type='button'
+                  variant='outline'
+                  disabled={codePending || Boolean(applied)}
+                  onClick={applyCode}
+                  className={cn(
+                    applied && 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/10 disabled:opacity-100'
+                  )}
+                >
+                  {codePending ? (
+                    <LoaderCircle className='size-4 animate-spin' />
+                  ) : applied ? (
+                    <CheckCircle2 className='size-4' />
+                  ) : null}
+                  {codePending ? t('applying') : applied ? t('applied') : t('apply')}
                 </Button>
               </div>
               {applied ? (
                 <p className='text-primary flex items-center gap-1.5 text-xs'>
                   <CheckCircle2 className='size-3.5' />
-                  {t('discountApplied', { code: applied.code, percent: applied.percent })}
+                  {t('discountAppliedPlan', { percent: applied.percent, plan: product.name })}
                 </p>
               ) : null}
               {codeError ? <p className='text-destructive text-xs'>{t('discountInvalid')}</p> : null}
@@ -360,22 +623,40 @@ export function OrderConfirm({ productId, kind, projectId }: OrderConfirmProps) 
                 <dd>{formatCurrency(product.price, locale)}</dd>
               </div>
               {discountAmount > 0 ? (
-                <div className='flex items-center justify-between'>
-                  <dt className='text-muted-foreground'>{t('discount')}</dt>
+                <div data-checkout-discount-row className='flex items-center justify-between'>
+                  <dt className='text-muted-foreground'>{t('discountWithCode', { code: applied?.code ?? '' })}</dt>
                   <dd className='text-primary'>−{formatCurrency(discountAmount, locale)}</dd>
                 </div>
               ) : null}
               <div className='flex items-center justify-between border-t pt-2'>
                 <dt className='font-semibold'>{t('total')}</dt>
-                <dd className='text-primary-strong text-xl font-bold'>{formatCurrency(total, locale)}</dd>
+                <dd className='text-primary-strong text-xl font-bold'>
+                  <AnimatedCheckoutTotal value={total} locale={locale} />
+                </dd>
               </div>
               <p className='text-muted-foreground text-right text-xs'>{t('vat')}</p>
             </dl>
 
-            <Button className='mt-4 w-full' size='lg' onClick={submit} disabled={!agreed || createOrder.isPending}>
-              {t('submit')}
+            <Button
+              data-checkout-submit
+              data-ready={agreed ? 'true' : 'false'}
+              aria-disabled={createOrder.isPending || undefined}
+              className='relative mt-4 w-full overflow-hidden'
+              size='lg'
+              onClick={submit}
+              disabled={createOrder.isPending}
+            >
+              {createOrder.isPending ? <LoaderCircle className='size-4 animate-spin' /> : null}
+              {createOrder.isPending ? t('processing') : t('submit')}
             </Button>
-            {!agreed ? <p className='text-muted-foreground mt-2 text-xs'>{t('termsRequired')}</p> : null}
+            <p
+              className={cn(
+                'mt-2 text-xs',
+                termsError ? 'text-destructive' : agreed ? 'text-primary' : 'text-muted-foreground'
+              )}
+            >
+              {agreed ? t('readyHint') : t('termsRequired')}
+            </p>
 
             <ul className='text-muted-foreground mt-4 space-y-2 text-xs'>
               <li className='flex items-start gap-2'>

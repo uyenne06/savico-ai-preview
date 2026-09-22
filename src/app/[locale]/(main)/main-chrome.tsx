@@ -1,9 +1,11 @@
 'use client'
 
-import { Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense, useEffect } from 'react'
 
 import { AuthDialog, useLogout } from '@/features/auth'
 import { CreateProjectDialog, resumeProjectRoute, useDesignStore } from '@/features/design'
+import { usePathname, useRouter } from '@/i18n/navigation'
 import { useAuth } from '@/shared/auth'
 import { AccountMenu } from '@/shared/components/account-menu'
 import { SiteHeader } from '@/shared/layouts'
@@ -34,6 +36,30 @@ function UserMenu({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) 
 }
 
 /**
+ * Cầu nối app-layer cho CTA ở feature khác muốn "Tạo dự án mới" mà không được
+ * import trực tiếp feature/design. URL là contract trung gian, sau khi mở modal
+ * thì query được dọn để refresh/back không tự bật lại.
+ */
+function CreateProjectQueryBridge() {
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const router = useRouter()
+  const openCreateDialog = useDesignStore((s) => s.openCreateDialog)
+
+  useEffect(() => {
+    if (searchParams.get('createProject') !== '1') return
+
+    openCreateDialog()
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('createProject')
+    const query = params.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }, [openCreateDialog, pathname, router, searchParams])
+
+  return null
+}
+
+/**
  * App-layer glue for the shared toolbar (mục II.1).
  *
  * Lives in `app/` because only this layer may import `features/auth` and
@@ -53,6 +79,7 @@ export function MainChrome() {
           kia thì phải khai báo ranh giới ở đúng chỗ cần, là đây. */}
       <Suspense fallback={null}>
         <AuthDialog />
+        <CreateProjectQueryBridge />
       </Suspense>
       <CreateProjectDialog />
     </>

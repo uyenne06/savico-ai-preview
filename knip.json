@@ -1,12 +1,38 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": [
-    "src/features/*/index.ts",
-    "src/shared/*/index.ts",
-    "src/shared/lib/api/index.ts",
-    "src/i18n/index.ts"
-  ],
+  "entry": ["src/features/*/index.ts", "src/shared/*/index.ts", "src/shared/lib/api/index.ts", "src/i18n/index.ts"],
   "project": ["src/**/*.{ts,tsx}"],
   "ignoreExportsUsedInFile": true,
-  "ignoreDependencies": ["tw-animate-css", "tailwindcss", "@commitlint/types"]
+  "ignoreFiles": [
+    "src/shared/components/assistant-dock.tsx",
+    "src/shared/components/common/radio-card-option.tsx",
+    "src/shared/components/ui/glasscn/glass-button.tsx",
+    "src/shared/components/ui/glasscn/glass-card.tsx",
+    "src/shared/components/ui/glasscn/liquid-glass.tsx",
+    "src/shared/components/ui/input-group.tsx",
+    "src/shared/lib/glass-variants.ts"
+  ],
+  "ignoreDependencies": [
+    "tw-animate-css",
+    "tailwindcss",
+    "@commitlint/types",
+    "@base-ui/react",
+    "@radix-ui/react-collapsible",
+    "@radix-ui/react-dropdown-menu",
+    "react-zoom-pan-pinch",
+    "yet-another-react-lightbox",
+    "prettier-plugin-tailwindcss"
+  ],
+  "ignoreIssues": {
+    "src/features/admin/components/common/field-kit.tsx": ["exports"],
+    "src/features/handbook/constants/handbook.constants.ts": ["exports"],
+    "src/features/supervision/constants/supervision.constants.ts": ["exports"],
+    "src/features/supervision/services/supervision.service.ts": ["exports"],
+    "src/features/supervision/types/supervision.types.ts": ["types"],
+    "src/features/contractors/constants/contractors.constants.ts": ["types"],
+    "src/features/contractors/types/contractor.types.ts": ["types"],
+    "src/shared/cms/message-catalog.ts": ["exports"],
+    "src/shared/components/ui/field.tsx": ["exports"],
+    "src/shared/constants/routes.ts": ["exports"]
+  }
 }

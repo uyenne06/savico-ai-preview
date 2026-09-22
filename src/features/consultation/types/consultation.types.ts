@@ -53,3 +53,34 @@ export interface BookConsultationPayload {
   phone: string
   note?: string
 }
+
+export type ConsultationHistoryStatus = 'pending' | 'confirmed' | 'done' | 'cancelled' | 'missed'
+
+/** Một dòng lịch sử tư vấn trong tab Tài khoản. */
+export interface ConsultationHistoryBooking {
+  id: string
+  consultantId: string
+  consultantName: string
+  specialtyLabel: string
+  yearsExperience: number
+  date: string
+  time: string
+  durationMinutes: number
+  note?: string
+  sessionNote?: string
+  rating?: number
+  status: ConsultationHistoryStatus
+  /** Ngày khách hủy để UI giải thích việc hoàn lượt. */
+  cancelledAt?: string
+  /** Số lần KTS đã thử liên hệ khi khách không tham gia. */
+  contactAttempts?: number
+  /** Buổi này được tính trong gói đang dùng. */
+  withinPlan?: boolean
+}
+
+/** Dữ liệu riêng của tab "Lịch sử tư vấn 1:1". */
+export interface ConsultationHistory {
+  planTier: 'basic' | 'advanced' | 'pro'
+  remainingCredits: number
+  bookings: ConsultationHistoryBooking[]
+}

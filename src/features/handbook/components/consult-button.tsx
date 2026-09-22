@@ -37,12 +37,16 @@ export function ConsultButton({
   if (variant === 'link') {
     return (
       <Link
+        data-consult-link
         href={href}
         className={cn('text-primary inline-flex items-center gap-2 text-sm font-medium hover:underline', className)}
       >
         <CalendarClock className='size-4' />
         {t('cta')}
-        <ArrowRight className='size-4' />
+        <ArrowRight
+          data-consult-arrow
+          className='size-4 transition-transform duration-200 motion-reduce:transition-none'
+        />
       </Link>
     )
   }

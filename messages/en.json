@@ -732,6 +732,7 @@
       "ctaButton": "New project",
       "related": "Related articles",
       "readMore": "Read more",
+      "backToTop": "Back to top",
       "loadError": "Unable to load this article",
       "loadErrorHint": "The connection may have been interrupted. Please try loading the content again.",
       "retry": "Try again",
@@ -1302,6 +1303,7 @@
   },
   "account": {
     "title": "My account",
+    "new": "new",
     "info": {
       "title": "Account information",
       "name": "Full name",
@@ -1353,6 +1355,202 @@
       "savedAt": "Saved {date}",
       "description": "Templates you saved.",
       "count": "{count} samples"
+    },
+    "dossiers": {
+      "title": "Project dossiers",
+      "description": "Dossiers you have sent to contractors and the current status of each invitation.",
+      "create": "Create a new dossier · free",
+      "source": {
+        "selfCreated": "Self-created dossier",
+        "design": "From design package"
+      },
+      "invited": "Invited {count}/3",
+      "completed": "Completed",
+      "notInvited": "Not sent to contractors",
+      "ready": "The dossier is ready and has not been sent to any contractor yet",
+      "viewDetail": "View details",
+      "findContractor": "Find contractors",
+      "area": "{area} m²",
+      "scale": {
+        "ground": "Ground floor",
+        "ground+1": "Ground + 1 floor",
+        "ground+2": "Ground + 2 floors",
+        "ground+3": "Ground + 3 floors",
+        "ground+4": "Ground + 4 floors"
+      },
+      "status": {
+        "sent": "Sent",
+        "received": "Received",
+        "accepted": "Accepted by contractor",
+        "done": "Completed"
+      },
+      "empty": {
+        "title": "No project dossiers yet",
+        "description": "Create a free dossier to share your project details and start finding suitable contractors.",
+        "create": "Create project dossier — free",
+        "viewDesignPlans": "View design plans"
+      },
+      "note": "Statuses are updated by the SAVICO support team. Select “View details” to track invitations, surveys and processing progress."
+    },
+    "purchaseHistory": {
+      "title": "Purchase history",
+      "description": "Your active plans, remaining allowances and complete payment history.",
+      "viewPlans": "View plans",
+      "designPlan": "Design plan",
+      "designPlanMeta": "Design plan · activated",
+      "supervisionPlan": "Supervision plan",
+      "supervisionPlanMeta": "Supervision plan · {project}",
+      "activatedAt": "Activated {date}",
+      "active": "Active",
+      "pendingPayment": "Awaiting payment",
+      "designCredits": "Design & estimate credits",
+      "libraryCredits": "Library lookup credits",
+      "consultationCredits": "1:1 consultations in plan",
+      "inspectionCredits": "Engineer inspections",
+      "supervisionStage": "Supervision stage",
+      "expiresAt": "Valid until {date}",
+      "designOrderMeta": "Valid until {date} · order #{order}",
+      "supervisionOrderMeta": "Plan valid until {date} · order #{order} · upgrade order #{pendingOrder} awaiting payment",
+      "upgrade": "Upgrade plan",
+      "openSupervision": "Open supervision",
+      "viewReceipt": "View receipt",
+      "continuePayment": "Continue payment",
+      "filterLabel": "Status",
+      "filter": {
+        "all": "All",
+        "paid": "Paid",
+        "pending": "Verifying",
+        "refunded": "Refunded"
+      },
+      "table": {
+        "code": "Order",
+        "date": "Date",
+        "plan": "Plan",
+        "amount": "Amount",
+        "status": "Status",
+        "receipt": "Receipt"
+      },
+      "tier": {
+        "basic": "Basic plan",
+        "advanced": "Advanced plan",
+        "pro": "Professional plan"
+      },
+      "status": {
+        "paid": "Paid",
+        "pending": "Verifying",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      },
+      "receipt": "Receipt",
+      "method": "Method",
+      "methodValue": {
+        "bank-qr": "Bank QR",
+        "card": "Card",
+        "manual": "Manual entry"
+      },
+      "paymentNote": "Online payments are currently confirmed by SAVICO via bank QR transfer. Receipts reflect the transaction data recorded in the system.",
+      "receiptDialog": {
+        "title": "Payment receipt",
+        "titleWithCode": "Receipt #{code}",
+        "description": "Transaction information recorded by SAVICO.",
+        "receiptHeading": "Payment receipt · #{code}",
+        "time": "Time",
+        "buyer": "Buyer",
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "noDiscount": "—",
+        "total": "Total paid",
+        "transferContent": "Transfer content",
+        "vatInvoice": "VAT invoice",
+        "vatIssued": "Issued · sent by email",
+        "vatNotRequested": "Not requested",
+        "planDetail": {
+          "basic": "Design plan · 3 design & estimate credits · 20 library lookups",
+          "advanced": "Design plan · 7 design & estimate credits · 100 library lookups",
+          "pro": "Premium design plan · includes 1:1 consultation benefits"
+        },
+        "note": "Need to change invoice details or request a refund? Contact SAVICO support and include order #{code}.",
+        "resendEmail": "Resend email",
+        "sendingEmail": "Sending...",
+        "downloadPdf": "Download PDF",
+        "generatingPdf": "Generating PDF...",
+        "downloadSuccess": "Receipt PDF downloaded",
+        "downloadError": "Could not generate the PDF. Please try again.",
+        "emailQueued": "Receipt resend requested for {email}"
+      },
+      "empty": {
+        "title": "No purchase history yet",
+        "description": "Packages you purchase will appear here."
+      }
+    },
+    "consultationHistory": {
+      "title": "1:1 consultation history",
+      "description": "Your upcoming session, architect notes and previous consultations.",
+      "quota": "1:1 consultations: {count} credit remaining in your {plan} · the first session is always free · reschedule or cancel at least 24 hours ahead to restore the credit.",
+      "planTier": {
+        "basic": "Basic plan",
+        "advanced": "Advanced plan",
+        "pro": "Professional plan"
+      },
+      "bookNew": "Book a new session",
+      "yearsExperience": "{count} years experience",
+      "yourNote": "Your note for the architect",
+      "upcomingLabel": "Upcoming",
+      "hoursLeft": "{count} hours left",
+      "ongoing": "In progress",
+      "reschedule": "Reschedule",
+      "cancel": {
+        "action": "Cancel",
+        "title": "Cancel this consultation?",
+        "description": "If you cancel early enough under the policy, the consultation credit will be restored to your plan.",
+        "keep": "Keep booking",
+        "confirm": "Cancel booking",
+        "processing": "Cancelling...",
+        "success": "Consultation cancelled"
+      },
+      "filterLabel": "Show",
+      "filter": {
+        "all": "All",
+        "upcoming": "Upcoming",
+        "done": "Completed",
+        "closed": "Cancelled / missed"
+      },
+      "status": {
+        "pending": "Awaiting confirmation",
+        "confirmed": "Confirmed",
+        "done": "Completed",
+        "cancelled": "Cancelled",
+        "missed": "Missed"
+      },
+      "meta": {
+        "withinPlan": "Included in Advanced plan",
+        "cancelled": "Cancelled on {date} · credit eligible for restoration",
+        "missed": "Architect called {count} times but could not reach you"
+      },
+      "sessionNote": "Session notes",
+      "hideSessionNote": "Hide notes",
+      "bookAgain": "Book again",
+      "support": "Support",
+      "supportToast": "The SAVICO support team will contact you as soon as possible.",
+      "supportDialog": {
+        "title": "Consultation support",
+        "description": "SAVICO has received your support request for {consultant} · {code}. Our support team will contact you as soon as possible.",
+        "close": "Got it"
+      },
+      "rating": {
+        "action": "Rate",
+        "prompt": "Rate this consultation",
+        "starLabel": "{count} stars",
+        "success": "Your {count}-star rating has been recorded"
+      },
+      "noteInline": {
+        "title": "Post-consultation notes · {consultant}",
+        "createProject": "Create a project from these suggestions"
+      },
+      "empty": {
+        "title": "No consultations yet",
+        "description": "Consultations you book will appear here."
+      }
     },
     "subtitle": "Your account details, projects in progress and saved samples.",
     "plan": {
@@ -3347,17 +3545,25 @@
       "discountLabel": "Discount code",
       "discountPlaceholder": "Enter code",
       "apply": "Apply",
+      "applying": "Applying",
+      "applied": "Applied",
       "discountApplied": "Code {code} applied — {percent}% off",
+      "discountAppliedPlan": "{percent}% off the {plan} plan — applied",
+      "discountToast": "Applied a {percent}% discount to the {plan} plan.",
       "discountInvalid": "That discount code is invalid or has expired.",
       "subtotal": "Subtotal",
       "discount": "Discount",
+      "discountWithCode": "Discount ({code})",
       "total": "Total",
       "vat": "VAT included.",
       "submit": "Proceed to payment",
+      "processing": "Creating order...",
+      "readyHint": "You will be taken to the QR payment page.",
       "refund": "Full refund within {hours} hours if you have not used any credits.",
       "noCardNote": "SAVICO never collects or stores your payment details.",
       "terms": "I have read and agree to the <terms>Terms of Use</terms> and <payment>Payment Policy</payment> of SAVICO.",
       "termsRequired": "Please accept the terms before paying.",
+      "termsRequiredToast": "Please tick the terms agreement before continuing.",
       "missingProduct": "We could not find the plan you picked. Go back to pricing and choose again.",
       "backToPlans": "Back to pricing"
     },
@@ -3366,10 +3572,14 @@
       "waiting": "Waiting for payment",
       "waitingBody": "The system confirms automatically once the money arrives — nothing else to click.",
       "expiresIn": "Code expires in",
-      "expired": "The QR code has expired.",
+      "expired": "The QR code has expired",
+      "expiredBody": "Your order is still held. Generate a new code to continue payment.",
       "regenerate": "Generate a new QR code",
+      "regenerating": "Generating code…",
+      "regeneratedToast": "New QR code generated — valid for {minutes} minutes",
       "qrTitle": "Scan the QR code to pay",
       "downloadQr": "Download QR image",
+      "downloadedQr": "QR image saved",
       "copyOrder": "Copy order code",
       "manualTitle": "Or transfer manually",
       "manualBody": "Use the details below if you cannot scan the QR code.",
@@ -3380,23 +3590,35 @@
       "content": "Transfer reference",
       "copy": "Copy",
       "copied": "Copied",
+      "copiedValue": "Copied: {value}",
+      "copyFailed": "Could not copy. Please try again.",
       "guideTitle": "Three steps",
       "guide1": "Open your banking app",
       "guide2": "Scan the QR code above",
       "guide3": "Keep the transfer reference exactly as shown",
       "keepContent": "Please keep the transfer reference unchanged. A wrong reference means the order needs manual checking and takes longer.",
       "transferred": "I have transferred",
+      "recording": "Recording…",
+      "verifying": "Confirming…",
       "support": "Need help?",
-      "supportToast": "The SAVICO support team will contact you on your registered phone number."
+      "supportToast": "The SAVICO support team will contact you on your registered phone number.",
+      "supportSubject": "Support for order {code}",
+      "supportBody": "I need support with order {code}."
     },
     "verifying": {
       "title": "Confirming your transfer",
       "subtitle": "We have your order. Banks usually confirm within 1–5 minutes.",
+      "confirmedTitle": "Transfer received",
+      "confirmedSubtitle": "Activating your plan…",
       "orderCode": "Order code",
       "amount": "Amount",
       "content": "Transfer reference used",
       "waited": "Waiting {time} — this page updates itself once the money arrives.",
+      "confirmedAfter": "Bank confirmation received after {time}.",
       "refresh": "Refresh status",
+      "checking": "Checking…",
+      "confirmedButton": "Confirmed",
+      "notReceivedToast": "Payment has not arrived yet — we will check again automatically.",
       "notSeen": "I transferred but nothing has updated",
       "keepPage": "You can leave this page open. It updates automatically."
     },
@@ -3425,6 +3647,14 @@
       "noExpiry": "Credits never expire.",
       "receipt": "View receipt",
       "receiptSent": "The receipt has been sent to your email and Zalo.",
+      "receiptTitle": "Payment receipt",
+      "receiptDescription": "Receipt for your paid order. A digital copy was sent to {email}.",
+      "receiptOrderCode": "Order code",
+      "receiptPlan": "Activated plan",
+      "receiptAmount": "Amount",
+      "receiptStatus": "Status",
+      "receiptPaid": "Paid",
+      "turnkeyContactConfirmation": "Request received — the SAVICO team will contact you.",
       "myProjects": "Go to my projects",
       "dashboard": "Supervision dashboard",
       "dataNote": "Your project data is stored privately and securely on SAVICO.",

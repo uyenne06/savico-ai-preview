@@ -47,7 +47,34 @@ export function useBookConsultation() {
     mutationFn: (payload: BookConsultationPayload) => consultationApi.bookConsultation(payload),
     onSuccess: (booking) => {
       queryClient.invalidateQueries({ queryKey: consultationKeys.availability(booking.consultantId) })
+      queryClient.invalidateQueries({ queryKey: consultationKeys.myBookings() })
       toast.success(t('successToast'))
+    },
+    onError: (error) => {
+      toast.error(isApiError(error) ? error.message : tErrors('generic'))
+    }
+  })
+}
+
+/** Lịch sử tư vấn của người dùng đang đăng nhập. */
+export function useMyConsultations() {
+  return useQuery({
+    queryKey: consultationKeys.myBookings(),
+    queryFn: () => consultationApi.getMyBookings()
+  })
+}
+
+/** Hủy lịch từ tab Tài khoản và làm mới danh sách ngay sau khi backend xác nhận. */
+export function useCancelConsultation() {
+  const queryClient = useQueryClient()
+  const t = useTranslations('account.consultationHistory')
+  const tErrors = useTranslations('errors')
+
+  return useMutation({
+    mutationFn: (bookingId: string) => consultationApi.cancelMyBooking(bookingId),
+    onSuccess: (history) => {
+      queryClient.setQueryData(consultationKeys.myBookings(), history)
+      toast.success(t('cancel.success'))
     },
     onError: (error) => {
       toast.error(isApiError(error) ? error.message : tErrors('generic'))

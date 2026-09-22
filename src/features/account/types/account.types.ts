@@ -1,3 +1,5 @@
+import type { CmsSubscription, CmsTransaction } from '@/shared/cms'
+
 /** Một hạn mức của gói: còn bao nhiêu trên tổng bao nhiêu. */
 export interface PlanAllowance {
   remaining: number
@@ -17,6 +19,22 @@ export interface AccountPlan {
   design: PlanAllowance
   /** Lượt tra thư viện mẫu (mục V — sẽ bổ sung sau). */
   library: PlanAllowance
+  /** Lượt tư vấn 1:1 đi kèm gói; tab lịch sử hiển thị số ĐÃ DÙNG / tổng. */
+  consultation: PlanAllowance
+}
+
+/** Gói hiện tại + giao dịch thuộc riêng tài khoản đang đăng nhập. */
+export interface AccountPurchaseHistory {
+  subscription: CmsSubscription | null
+  /** Đơn đã kích hoạt gói thiết kế hiện tại. */
+  designOrderId: string | null
+  /** Đơn đã kích hoạt gói giám sát hiện tại. */
+  supervisionOrderId: string | null
+  /** Đơn nâng cấp giám sát chưa hoàn tất thanh toán, nếu có. */
+  pendingSupervisionOrderId: string | null
+  /** Hạn gói giám sát theo giao dịch, độc lập với timeline dự án demo. */
+  supervisionExpiresAt: string | null
+  transactions: CmsTransaction[]
 }
 
 /**

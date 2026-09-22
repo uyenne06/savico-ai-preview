@@ -535,7 +535,7 @@ export function ContractorProfile({ projectId, contractorId, tab }: ContractorPr
             <div id={HEADER_ANCHOR_ID} className='h-px' aria-hidden />
 
             <motion.div layout className='overflow-hidden' transition={{ duration: 0.3, ease: revealEase }}>
-              <AnimatePresence mode='wait' initial={false}>
+              <AnimatePresence mode='wait'>
                 <TabPanel key={tab} direction={tabDirection}>
                   {tab === 'overview' ? (
                     <>

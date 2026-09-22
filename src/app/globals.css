@@ -3599,6 +3599,190 @@ body:has([data-generation-waiting]) [data-assistant-idle-ring] {
   }
 }
 
+/* Handbook article detail (Hình 12): motion only. Resting geometry, spacing,
+   typography and palette continue to come from the existing component classes. */
+[data-handbook-reading-progress] {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: var(--primary);
+  pointer-events: none;
+  transform: scaleX(var(--handbook-reading-progress, 0));
+  transform-origin: left center;
+  transition: transform 80ms linear;
+  will-change: transform;
+}
+
+[data-create-project-trigger]:hover {
+  box-shadow: 0 0.45rem 1.2rem color-mix(in oklch, var(--primary) 24%, transparent);
+}
+
+[data-article-breadcrumb-link] {
+  position: relative;
+  transition: color 180ms ease-out;
+}
+
+[data-article-breadcrumb-link]::after {
+  position: absolute;
+  right: 0;
+  bottom: -0.12rem;
+  left: 0;
+  height: 1px;
+  border-radius: 999px;
+  background: var(--primary);
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-article-breadcrumb-link]:hover,
+[data-article-breadcrumb-link]:focus-visible {
+  color: var(--primary);
+}
+
+[data-article-breadcrumb-link]:hover::after,
+[data-article-breadcrumb-link]:focus-visible::after {
+  transform: scaleX(1);
+}
+
+[data-page-entrance='play'] [data-article-hero] {
+  animation: handbook-article-hero-in 760ms cubic-bezier(0.22, 1, 0.36, 1)
+    calc(var(--page-entrance-offset, 0ms) + 260ms) both;
+}
+
+[data-article-scroll-reveal][data-article-reveal='pending'] {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+[data-article-scroll-reveal][data-article-reveal='shown'] {
+  animation: handbook-article-scroll-reveal 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+[data-article-scroll-reveal][data-article-reveal='instant'] {
+  opacity: 1;
+  transform: none;
+}
+
+[data-article-project-card][data-article-cta-nudge='true'] {
+  animation: handbook-article-cta-breathe 620ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+
+[data-article-project-button] {
+  transition:
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms ease-out,
+    filter 180ms ease-out;
+}
+
+[data-article-project-button]:hover {
+  filter: brightness(1.04);
+  transform: translateY(-2px);
+  box-shadow: 0 0.55rem 1.25rem color-mix(in oklch, var(--primary) 22%, transparent);
+}
+
+[data-article-project-button]:active {
+  transform: translateY(0) scale(0.98);
+}
+
+[data-article-consult-card] {
+  transition: border-color 180ms ease-out;
+}
+
+[data-article-consult-card]:hover,
+[data-article-consult-card]:focus-within {
+  border-color: color-mix(in oklch, var(--primary) 42%, var(--border));
+}
+
+[data-article-consult-card]:hover [data-consult-arrow],
+[data-article-consult-card]:focus-within [data-consult-arrow] {
+  transform: translateX(0.25rem);
+}
+
+[data-article-related-card] {
+  transition:
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease-out,
+    box-shadow 240ms ease-out;
+}
+
+[data-article-related-card]:hover,
+[data-article-related-card]:focus-visible {
+  border-color: color-mix(in oklch, var(--primary) 44%, var(--border));
+  transform: translateY(-3px);
+  box-shadow: 0 0.75rem 1.8rem color-mix(in oklch, var(--foreground) 12%, transparent);
+}
+
+[data-article-related-card]:hover img,
+[data-article-related-card]:focus-visible img {
+  transform: scale(1.045);
+}
+
+[data-article-related-arrow] {
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-article-related-card]:hover [data-article-related-arrow],
+[data-article-related-card]:focus-visible [data-article-related-arrow] {
+  transform: translateX(0.25rem);
+}
+
+[data-article-back-to-top] {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition:
+    opacity 220ms ease-out,
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms ease-out;
+}
+
+[data-article-back-to-top][data-visible='true'] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+[data-article-back-to-top][data-visible='true']:hover {
+  transform: translateY(-3px);
+}
+
+@keyframes handbook-article-hero-in {
+  from {
+    opacity: 0;
+    transform: scale(1.025);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes handbook-article-scroll-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes handbook-article-cta-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  48% {
+    transform: scale(1.025);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-stat-icon],
   [data-stat-card],
@@ -3768,6 +3952,37 @@ body:has([data-generation-waiting]) [data-assistant-idle-ring] {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+  [data-article-scroll-reveal][data-article-reveal],
+  [data-article-project-card][data-article-cta-nudge='true'] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  [data-article-project-button]:hover,
+  [data-article-project-button]:active,
+  [data-article-related-card]:hover,
+  [data-article-related-card]:focus-visible,
+  [data-article-related-card]:hover img,
+  [data-article-related-card]:focus-visible img,
+  [data-article-related-card]:hover [data-article-related-arrow],
+  [data-article-related-card]:focus-visible [data-article-related-arrow],
+  [data-article-consult-card]:hover [data-consult-arrow],
+  [data-article-consult-card]:focus-within [data-consult-arrow],
+  [data-article-back-to-top][data-visible='true']:hover {
+    transform: none !important;
+  }
+  [data-handbook-reading-progress],
+  [data-article-breadcrumb-link],
+  [data-article-breadcrumb-link]::after,
+  [data-article-project-button],
+  [data-article-consult-card],
+  [data-consult-arrow],
+  [data-article-related-card],
+  [data-article-related-card] img,
+  [data-article-related-arrow],
+  [data-article-back-to-top] {
+    transition-duration: 0ms !important;
   }
   [data-page-entrance='play'] [data-dossier-success-check] {
     animation: none !important;
@@ -5105,6 +5320,928 @@ html[data-pricing-scrolling='true'] .supervision-journey-flow-dot {
     45% {
       transform: translateX(-12px);
     }
+  }
+}
+
+/* Checkout S03 — confirmation motion/interaction layer. These selectors only
+ * animate existing UI; resting layout, spacing and palette remain unchanged. */
+[data-checkout-connector] > span {
+  transform: scaleX(0);
+}
+
+[data-checkout-connector][data-fill='full'] > span,
+[data-checkout-connector][data-fill='animate'] > span {
+  transform: scaleX(1);
+}
+
+[data-checkout-confirm-root][data-page-entrance='play']
+  [data-checkout-current='confirm']
+  [data-checkout-connector][data-fill='animate']
+  > span {
+  animation: checkout-connector-fill 440ms cubic-bezier(0.22, 1, 0.36, 1) calc(var(--page-entrance-offset, 0ms) + 250ms)
+    both;
+}
+
+[data-checkout-confirm-root][data-page-entrance='play']
+  [data-checkout-current='confirm']
+  [data-checkout-step-node][data-state='current'] {
+  animation: checkout-current-step-pop 430ms cubic-bezier(0.22, 1, 0.36, 1)
+    calc(var(--page-entrance-offset, 0ms) + 640ms) both;
+}
+
+/* The stepper owns the first beat. Content starts only after the 1 → 2 line
+ * has substantially arrived, then continues with the normal 130 ms rhythm. */
+[data-checkout-confirm-root] [data-entrance-step='1'] {
+  --entrance-step-delay: 890ms;
+}
+[data-checkout-confirm-root] [data-entrance-step='2'] {
+  --entrance-step-delay: 1020ms;
+}
+[data-checkout-confirm-root] [data-entrance-step='3'] {
+  --entrance-step-delay: 1150ms;
+}
+[data-checkout-confirm-root] [data-entrance-step='4'] {
+  --entrance-step-delay: 1280ms;
+}
+[data-checkout-confirm-root] [data-entrance-step='5'] {
+  --entrance-step-delay: 1410ms;
+}
+
+/* Checkout S04 — QR payment. The stepper is the first beat: step 2 finishes,
+ * connector 2 → 3 fills, then step 3 lands. The rest of the screen follows. */
+[data-checkout-payment-root][data-page-entrance='play']
+  [data-checkout-current='payment']
+  [data-checkout-step-node][data-step='confirm']
+  svg {
+  stroke-dasharray: 28;
+  stroke-dashoffset: 28;
+  animation: checkout-check-draw 320ms cubic-bezier(0.22, 1, 0.36, 1) calc(var(--page-entrance-offset, 0ms) + 170ms)
+    forwards;
+}
+
+[data-checkout-payment-root][data-page-entrance='play']
+  [data-checkout-current='payment']
+  [data-checkout-connector][data-fill='animate']
+  > span {
+  animation: checkout-connector-fill 460ms cubic-bezier(0.22, 1, 0.36, 1) calc(var(--page-entrance-offset, 0ms) + 440ms)
+    both;
+}
+
+[data-checkout-payment-root][data-page-entrance='play']
+  [data-checkout-current='payment']
+  [data-checkout-step-node][data-state='current'] {
+  animation: checkout-current-step-pop 430ms cubic-bezier(0.22, 1, 0.36, 1)
+    calc(var(--page-entrance-offset, 0ms) + 840ms) both;
+}
+
+[data-checkout-payment-root] [data-entrance-step='1'] {
+  --entrance-step-delay: 1110ms;
+}
+[data-checkout-payment-root] [data-entrance-step='2'] {
+  --entrance-step-delay: 1240ms;
+}
+[data-checkout-payment-root] [data-entrance-step='3'] {
+  --entrance-step-delay: 1370ms;
+}
+[data-checkout-payment-root] [data-entrance-step='4'] {
+  --entrance-step-delay: 3000ms;
+}
+
+[data-payment-time-progress] {
+  transition: width 1s linear;
+}
+
+[data-payment-status][data-expired='true'] [data-payment-time-progress] {
+  background: var(--destructive);
+}
+
+[data-payment-waiting-dot] {
+  position: relative;
+}
+
+[data-payment-waiting-dot][data-active='true']::after {
+  position: absolute;
+  inset: -5px;
+  border: 1px solid color-mix(in oklch, var(--primary) 55%, transparent);
+  border-radius: 999px;
+  content: '';
+  animation: checkout-payment-waiting-pulse 2.1s ease-out infinite;
+}
+
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-qr-target] canvas {
+  animation: checkout-payment-qr-lock 560ms cubic-bezier(0.22, 1, 0.36, 1)
+    calc(var(--page-entrance-offset, 0ms) + 1390ms) both;
+}
+
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-qr-corner] {
+  animation: checkout-payment-corner-pop 380ms cubic-bezier(0.22, 1, 0.36, 1)
+    calc(var(--page-entrance-offset, 0ms) + 1810ms) both;
+}
+
+[data-payment-qr-target] canvas,
+[data-payment-qr-corner] {
+  transition:
+    filter 260ms ease-out,
+    opacity 260ms ease-out;
+}
+
+[data-payment-qr-target][data-expired='true'] canvas {
+  filter: grayscale(1) blur(2.2px);
+  opacity: 0.34;
+}
+
+[data-payment-qr-target][data-expired='true'] [data-payment-qr-corner] {
+  filter: grayscale(1);
+  opacity: 0.32;
+}
+
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-guide-step] {
+  opacity: 0;
+  animation: checkout-payment-row-in 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-guide-step]:nth-child(1) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 1870ms);
+}
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-guide-step]:nth-child(2) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 1960ms);
+}
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-guide-step]:nth-child(3) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 2050ms);
+}
+
+[data-payment-minor-action],
+[data-payment-copy-button] {
+  transition:
+    background-color 170ms ease-out,
+    border-color 170ms ease-out,
+    color 170ms ease-out,
+    transform 150ms ease-out;
+}
+
+[data-payment-minor-action]:hover,
+[data-payment-copy-button]:hover {
+  background: var(--muted);
+}
+
+[data-payment-minor-action]:active,
+[data-payment-copy-button]:active {
+  transform: scale(0.96);
+}
+
+[data-payment-minor-action][data-copied='true'],
+[data-payment-copy-button][data-copied='true'] {
+  border-color: color-mix(in oklch, var(--primary) 34%, var(--border));
+  background: color-mix(in oklch, var(--primary) 13%, var(--card));
+  color: var(--primary-strong);
+}
+
+[data-payment-copy-button][data-copied='true'] svg {
+  animation: checkout-payment-copy-pop 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-transfer-row] {
+  opacity: 0;
+  animation: checkout-payment-row-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-transfer-row]:nth-child(1) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 1510ms);
+}
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-transfer-row]:nth-child(2) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 1600ms);
+}
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-transfer-row]:nth-child(3) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 1690ms);
+}
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-transfer-row]:nth-child(4) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 1780ms);
+}
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-transfer-row]:nth-child(5) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 1870ms);
+}
+
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-content-row='true'] {
+  animation:
+    checkout-payment-row-in 420ms cubic-bezier(0.22, 1, 0.36, 1) calc(var(--page-entrance-offset, 0ms) + 1870ms) both,
+    checkout-payment-content-emphasis 650ms cubic-bezier(0.22, 1, 0.36, 1)
+      calc(var(--page-entrance-offset, 0ms) + 2260ms) 1 both;
+}
+
+[data-checkout-payment-root][data-page-entrance='play'] [data-payment-warning] {
+  opacity: 0;
+  animation: checkout-payment-row-in 420ms cubic-bezier(0.22, 1, 0.36, 1)
+    calc(var(--page-entrance-offset, 0ms) + 2010ms) both;
+}
+
+/* S03 → S04 forward navigation: keep the stepper as the visual anchor and
+ * overlap its progress animation with the first payment content. This avoids
+ * the old "stepper-only" pause between routes while preserving the fuller
+ * choreography for reload/direct-entry. */
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-checkout-current='payment']
+  [data-checkout-step-node][data-step='confirm']
+  svg {
+  animation-duration: 220ms;
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 30ms);
+}
+
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-checkout-current='payment']
+  [data-checkout-connector][data-fill='animate']
+  > span {
+  animation-duration: 330ms;
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 120ms);
+}
+
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-checkout-current='payment']
+  [data-checkout-step-node][data-state='current'] {
+  animation-duration: 360ms;
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 410ms);
+}
+
+[data-checkout-payment-root][data-checkout-forward='true'] [data-entrance-step='1'] {
+  --entrance-step-delay: 120ms;
+}
+[data-checkout-payment-root][data-checkout-forward='true'] [data-entrance-step='2'] {
+  --entrance-step-delay: 220ms;
+}
+[data-checkout-payment-root][data-checkout-forward='true'] [data-entrance-step='3'] {
+  --entrance-step-delay: 260ms;
+}
+[data-checkout-payment-root][data-checkout-forward='true'] [data-entrance-step='4'] {
+  --entrance-step-delay: 1050ms;
+}
+
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play'] [data-payment-qr-target] canvas {
+  animation-duration: 440ms;
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 380ms);
+}
+
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play'] [data-payment-qr-corner] {
+  animation-duration: 300ms;
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 680ms);
+}
+
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-payment-guide-step]:nth-child(1) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 760ms);
+}
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-payment-guide-step]:nth-child(2) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 840ms);
+}
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-payment-guide-step]:nth-child(3) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 920ms);
+}
+
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-payment-transfer-row]:nth-child(1) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 420ms);
+}
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-payment-transfer-row]:nth-child(2) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 500ms);
+}
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-payment-transfer-row]:nth-child(3) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 580ms);
+}
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-payment-transfer-row]:nth-child(4) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 660ms);
+}
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-payment-transfer-row]:nth-child(5) {
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 740ms);
+}
+
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play']
+  [data-payment-content-row='true'] {
+  animation:
+    checkout-payment-row-in 360ms cubic-bezier(0.22, 1, 0.36, 1) calc(var(--page-entrance-offset, 0ms) + 740ms) both,
+    checkout-payment-content-emphasis 560ms cubic-bezier(0.22, 1, 0.36, 1)
+      calc(var(--page-entrance-offset, 0ms) + 1040ms) 1 both;
+}
+
+[data-checkout-payment-root][data-checkout-forward='true'][data-page-entrance='play'] [data-payment-warning] {
+  animation-duration: 360ms;
+  animation-delay: calc(var(--page-entrance-offset, 0ms) + 900ms);
+}
+
+[data-checkout-buyer-input] {
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out,
+    color 160ms ease-out;
+}
+
+[data-checkout-buyer-input]:hover:not(:focus-visible) {
+  border-color: color-mix(in oklch, var(--foreground) 34%, var(--border));
+}
+
+[data-checkout-buyer-input]:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 16%, transparent);
+}
+
+[data-checkout-invoice-fields] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease-out;
+}
+
+[data-checkout-invoice-fields][data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+[data-checkout-invoice-switch][data-state='checked'] [data-slot='switch-thumb'] {
+  animation: checkout-switch-thumb-bounce 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-checkout-terms] {
+  transition:
+    background-color 180ms ease-out,
+    color 180ms ease-out;
+}
+
+[data-checkout-terms][data-error='true'] {
+  background: color-mix(in oklch, var(--destructive) 9%, transparent);
+}
+
+[data-checkout-terms-checkbox] [data-slot='checkbox-indicator'] svg {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+}
+
+[data-checkout-terms-checkbox][data-state='checked'] [data-slot='checkbox-indicator'] svg {
+  animation: checkout-check-draw 260ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+[data-checkout-discount-row] {
+  animation: checkout-discount-row-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+[data-checkout-submit] {
+  transition:
+    opacity 170ms ease-out,
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms ease-out,
+    filter 180ms ease-out;
+}
+
+[data-checkout-submit][data-ready='false'] {
+  opacity: 0.52;
+}
+
+[data-checkout-submit][data-ready='false']:hover,
+[data-checkout-submit][data-ready='false']:active {
+  filter: none;
+  transform: none;
+  box-shadow: none;
+}
+
+[data-checkout-submit][data-ready='true']:hover {
+  filter: brightness(1.035);
+  transform: translateY(-2px);
+  box-shadow: 0 0.55rem 1.35rem color-mix(in oklch, var(--primary) 24%, transparent);
+}
+
+[data-checkout-submit][data-ready='true']:active {
+  transform: translateY(0) scale(0.985);
+}
+
+[data-checkout-submit][data-ready='true']::after {
+  position: absolute;
+  inset: -45% auto -45% -38%;
+  width: 30%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--primary-foreground) 62%, transparent),
+    transparent
+  );
+  content: '';
+  pointer-events: none;
+  transform: skewX(-18deg) translateX(-180%);
+  animation: checkout-submit-shine 620ms cubic-bezier(0.22, 1, 0.36, 1) 100ms 1 both;
+}
+
+.dark [data-checkout-submit][data-ready='true']::after {
+  background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--foreground) 72%, transparent), transparent);
+}
+
+/* Checkout S08 — completion choreography. Steps 1–2 are already complete and
+ * remain still. Step 3 finishes, connector 3→4 fills, then step 4 draws its
+ * check. There are no clickable step nodes on this screen. */
+[data-checkout-done-root][data-page-entrance='play']
+  [data-checkout-current='done']
+  [data-checkout-step-node][data-step='payment']
+  svg {
+  stroke-dasharray: 28;
+  stroke-dashoffset: 28;
+  animation: checkout-check-draw 300ms cubic-bezier(0.22, 1, 0.36, 1) 100ms forwards;
+}
+
+[data-checkout-done-root][data-page-entrance='play']
+  [data-checkout-current='done']
+  [data-checkout-connector][data-fill='animate']
+  > span {
+  transform: scaleX(0);
+  animation: checkout-connector-fill 420ms cubic-bezier(0.22, 1, 0.36, 1) 380ms both;
+}
+
+[data-checkout-done-root][data-page-entrance='play']
+  [data-checkout-current='done']
+  [data-checkout-step-node][data-step='done']
+  svg {
+  stroke-dasharray: 28;
+  stroke-dashoffset: 28;
+  animation: checkout-check-draw 320ms cubic-bezier(0.22, 1, 0.36, 1) 780ms forwards;
+}
+
+[data-checkout-done-success-icon] {
+  position: relative;
+  isolation: isolate;
+}
+
+[data-checkout-done-root][data-page-entrance='play'] [data-checkout-done-success-icon] {
+  animation: checkout-done-success-pop 500ms cubic-bezier(0.2, 1.35, 0.36, 1) 990ms both;
+}
+
+[data-checkout-done-root][data-page-entrance='play'] [data-checkout-done-success-icon]::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 2px solid color-mix(in oklch, var(--primary) 42%, transparent);
+  border-radius: inherit;
+  content: '';
+  animation: checkout-done-success-wave 720ms ease-out 1210ms both;
+}
+
+[data-checkout-done-success-check] path {
+  stroke-dasharray: 32;
+  stroke-dashoffset: 0;
+}
+
+[data-checkout-done-root][data-page-entrance='play'] [data-checkout-done-success-check] path {
+  stroke-dashoffset: 32;
+  animation: checkout-check-draw 380ms cubic-bezier(0.22, 1, 0.36, 1) 1280ms forwards;
+}
+
+[data-checkout-done-root] [data-entrance-step='1'] {
+  --entrance-step-delay: 1680ms;
+}
+[data-checkout-done-root] [data-entrance-step='2'] {
+  --entrance-step-delay: 1900ms;
+}
+[data-checkout-done-root] [data-entrance-step='3'] {
+  --entrance-step-delay: 3000ms;
+}
+[data-checkout-done-root] [data-entrance-step='4'] {
+  --entrance-step-delay: 3140ms;
+}
+[data-checkout-done-root] [data-entrance-step='5'] {
+  --entrance-step-delay: 3540ms;
+}
+
+/* S08 — exclusive gift shine. Keep the shine on the gift box itself instead
+ * of a nested motion element, so it is independent from Framer/Tailwind mount
+ * state and reliably runs after both S07→S08 navigation and hard reload.
+ * Each 6.2s cycle contains ~1s of light sweep then a fully transparent idle
+ * period; there is never a bright final frame parked at the right edge. */
+[data-completion-exclusive='true']::after {
+  position: absolute;
+  z-index: 2;
+  top: -28%;
+  bottom: -28%;
+  left: -34%;
+  width: 28%;
+  background: linear-gradient(
+    104deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.025) 16%,
+    rgba(255, 255, 255, 0.1) 32%,
+    rgba(255, 255, 255, 0.26) 45%,
+    rgba(255, 255, 255, 0.34) 50%,
+    rgba(255, 255, 255, 0.26) 55%,
+    rgba(255, 255, 255, 0.1) 68%,
+    rgba(255, 255, 255, 0.025) 84%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  content: '';
+  pointer-events: none;
+  opacity: 0;
+  filter: blur(2.5px);
+  transform: translate3d(0, 0, 0) skewX(-16deg);
+  will-change: transform, opacity;
+  animation: checkout-done-exclusive-shine 6.4s linear 2.35s infinite;
+}
+
+.dark [data-completion-exclusive='true']::after {
+  background: linear-gradient(
+    104deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.02) 16%,
+    rgba(255, 255, 255, 0.075) 32%,
+    rgba(255, 255, 255, 0.2) 45%,
+    rgba(255, 255, 255, 0.28) 50%,
+    rgba(255, 255, 255, 0.2) 55%,
+    rgba(255, 255, 255, 0.075) 68%,
+    rgba(255, 255, 255, 0.02) 84%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+@keyframes checkout-done-success-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkout-done-success-wave {
+  0% {
+    opacity: 0.52;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+
+@keyframes checkout-done-exclusive-shine {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) skewX(-16deg);
+  }
+  2% {
+    opacity: 0.08;
+  }
+  5% {
+    opacity: 0.58;
+    transform: translate3d(82%, 0, 0) skewX(-16deg);
+  }
+  10.5% {
+    opacity: 0.68;
+    transform: translate3d(270%, 0, 0) skewX(-16deg);
+  }
+  16% {
+    opacity: 0.58;
+    transform: translate3d(458%, 0, 0) skewX(-16deg);
+  }
+  19% {
+    opacity: 0;
+    transform: translate3d(540%, 0, 0) skewX(-16deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(540%, 0, 0) skewX(-16deg);
+  }
+}
+
+/* Checkout S06 — transfer verification. The stepper intentionally stays
+ * static because the user is still on step 3; only the verification content
+ * enters and changes state. */
+[data-checkout-verifying-root] [data-entrance-step='1'] {
+  --entrance-step-delay: 210ms;
+}
+[data-checkout-verifying-root] [data-entrance-step='2'] {
+  --entrance-step-delay: 350ms;
+}
+[data-checkout-verifying-root] [data-entrance-step='3'] {
+  --entrance-step-delay: 490ms;
+}
+[data-checkout-verifying-root] [data-entrance-step='4'] {
+  --entrance-step-delay: 630ms;
+}
+[data-checkout-verifying-root] [data-entrance-step='5'] {
+  --entrance-step-delay: 770ms;
+}
+
+[data-verifying-status-icon] {
+  position: relative;
+  isolation: isolate;
+  transition:
+    background-color 220ms ease-out,
+    color 220ms ease-out;
+}
+
+[data-checkout-verifying-root][data-page-entrance='play'] [data-verifying-status-icon] {
+  animation: checkout-verifying-icon-pop 480ms cubic-bezier(0.22, 1, 0.36, 1)
+    calc(var(--page-entrance-offset, 0ms) + 60ms) both;
+}
+
+[data-verifying-status-icon][data-confirmed='false']::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 1px solid color-mix(in oklch, var(--warning) 48%, transparent);
+  border-radius: inherit;
+  content: '';
+  animation: checkout-verifying-ripple 2.3s ease-out 420ms infinite;
+}
+
+[data-verifying-confirmed-check] path {
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  animation: checkout-check-draw 360ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+[data-checkout-verifying-root] h1 {
+  transition: color 220ms ease-out;
+}
+
+[data-checkout-verifying-root][data-confirmed='true'] [data-verifying-heading] {
+  animation: checkout-verifying-confirmed-copy 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+[data-verifying-refresh-icon][data-checking='true'] {
+  animation: checkout-verifying-refresh-spin 420ms linear infinite;
+}
+
+[data-verifying-support-label] {
+  position: relative;
+}
+
+[data-verifying-support-label]::after {
+  position: absolute;
+  right: 0;
+  bottom: -0.12rem;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-verifying-support]:hover [data-verifying-support-label]::after,
+[data-verifying-support]:focus-visible [data-verifying-support-label]::after {
+  transform: scaleX(1);
+}
+
+@keyframes checkout-connector-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes checkout-current-step-pop {
+  0% {
+    opacity: 0.45;
+    transform: scale(0.78);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkout-switch-thumb-bounce {
+  0%,
+  100% {
+    scale: 1;
+  }
+  62% {
+    scale: 1.14;
+  }
+}
+
+@keyframes checkout-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes checkout-discount-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes checkout-payment-waiting-pulse {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.75);
+  }
+  72%,
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+@keyframes checkout-payment-qr-lock {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkout-payment-corner-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkout-payment-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes checkout-payment-copy-pop {
+  0% {
+    opacity: 0.45;
+    transform: scale(0.72);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.16);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkout-payment-content-emphasis {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--warning) 35%, transparent);
+  }
+  52% {
+    box-shadow:
+      inset 0 0 0 2px color-mix(in oklch, var(--warning) 72%, transparent),
+      0 0 0 4px color-mix(in oklch, var(--warning) 16%, transparent);
+  }
+}
+
+@keyframes checkout-verifying-icon-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.76);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkout-verifying-ripple {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.88);
+  }
+  72%,
+  100% {
+    opacity: 0;
+    transform: scale(1.38);
+  }
+}
+
+@keyframes checkout-verifying-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes checkout-verifying-confirmed-copy {
+  from {
+    opacity: 0.55;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes checkout-submit-shine {
+  from {
+    transform: skewX(-18deg) translateX(-180%);
+  }
+  to {
+    transform: skewX(-18deg) translateX(560%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-checkout-connector] > span,
+  [data-checkout-step-node],
+  [data-checkout-invoice-fields],
+  [data-checkout-invoice-switch] [data-slot='switch-thumb'],
+  [data-checkout-terms-checkbox] [data-slot='checkbox-indicator'] svg,
+  [data-checkout-discount-row],
+  [data-payment-waiting-dot]::after,
+  [data-payment-qr-target] canvas,
+  [data-payment-qr-corner],
+  [data-payment-guide-step],
+  [data-payment-transfer-row],
+  [data-payment-warning],
+  [data-payment-copy-button] svg,
+  [data-verifying-status-icon],
+  [data-verifying-status-icon]::after,
+  [data-verifying-confirmed-check] path,
+  [data-verifying-refresh-icon],
+  [data-verifying-heading],
+  [data-checkout-done-success-icon],
+  [data-checkout-done-success-icon]::after,
+  [data-checkout-done-success-check] path,
+  [data-completion-exclusive='true']::after,
+  [data-checkout-submit] {
+    animation: none !important;
+    transition-duration: 0ms !important;
+  }
+
+  [data-checkout-payment-root] [data-checkout-step-node] svg,
+  [data-checkout-payment-root] [data-payment-guide-step],
+  [data-checkout-payment-root] [data-payment-transfer-row],
+  [data-checkout-payment-root] [data-payment-warning] {
+    opacity: 1 !important;
+    transform: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+
+  [data-verifying-confirmed-check] path {
+    stroke-dashoffset: 0 !important;
+  }
+
+  [data-checkout-done-success-check] path,
+  [data-checkout-done-root] [data-checkout-current='done'] [data-checkout-step-node] svg {
+    stroke-dashoffset: 0 !important;
+  }
+
+  [data-completion-exclusive='true']::after {
+    opacity: 0 !important;
+    transform: none !important;
+  }
+
+  [data-verifying-support-label]::after {
+    transition-duration: 0ms !important;
+  }
+
+  [data-checkout-terms-checkbox][data-state='checked'] [data-slot='checkbox-indicator'] svg {
+    stroke-dashoffset: 0;
+  }
+
+  [data-checkout-submit]::after {
+    display: none;
+  }
+
+  [data-checkout-submit][data-ready='true']:hover,
+  [data-checkout-submit][data-ready='true']:active {
+    transform: none;
   }
 }
 @media (max-width: 767.98px) {

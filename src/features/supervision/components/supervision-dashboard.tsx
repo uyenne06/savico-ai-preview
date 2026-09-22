@@ -96,7 +96,7 @@ export function SupervisionDashboard({ projectId, stageIndex }: SupervisionDashb
   return (
     <div className='mx-auto w-full max-w-6xl space-y-5 px-4 py-8 lg:px-8'>
       <nav className='text-muted-foreground flex flex-wrap items-center gap-2 text-sm'>
-        <Link href={ROUTES.ACCOUNT} className='hover:text-foreground'>
+        <Link href={ROUTES.ACCOUNT_PROJECTS} className='hover:text-foreground'>
           {t('breadcrumbProjects')}
         </Link>
         <span aria-hidden>›</span>

@@ -31,6 +31,7 @@ export function ChatDock() {
   const t = useTranslations('assistant')
   const open = useChatContextStore((s) => s.panelOpen)
   const setOpen = useChatContextStore((s) => s.setPanelOpen)
+  const suppressed = useChatContextStore((s) => s.dockSuppressed)
   const [ready, setReady] = useState(false)
   const [scrolling, setScrolling] = useState(false)
   const [openedOnce, setOpenedOnce] = useState(false)
@@ -139,7 +140,7 @@ export function ChatDock() {
     }
   }, [open])
 
-  const labelAvailable = ready && !scrolling && !open
+  const labelAvailable = ready && !scrolling && !open && !suppressed
 
   function toggleAssistant() {
     if (!open) {
@@ -159,7 +160,7 @@ export function ChatDock() {
 
   return (
     <>
-      {suggestion && ready && !open ? (
+      {suggestion && ready && !open && !suppressed ? (
         <button
           type='button'
           data-assistant-topic-suggestion
@@ -180,9 +181,9 @@ export function ChatDock() {
         onClick={toggleAssistant}
         className={cn(
           'group fixed right-6 bottom-6 z-[60] flex cursor-pointer flex-col items-center drop-shadow-lg transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none',
-          ready ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+          ready && !suppressed ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         )}
-        style={{ transform: ready ? undefined : 'translate3d(0, 40px, 0)' }}
+        style={{ transform: ready && !suppressed ? undefined : 'translate3d(0, 40px, 0)' }}
       >
         {!openedOnce && ready && !open ? (
           <span

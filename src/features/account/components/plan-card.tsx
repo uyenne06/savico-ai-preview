@@ -54,13 +54,13 @@ export function PlanCard({ designAllowance }: PlanCardProps = {}) {
   const t = useTranslations('account.plan')
   const { data: plan, isPending } = useAccountPlan()
 
-  if (isPending) return <Skeleton className='h-56 w-full rounded-2xl' />
+  if (isPending) return <Skeleton className='h-52 w-full rounded-xl' />
   if (!plan) return null
 
   const design = designAllowance ?? plan.design
 
   return (
-    <section className='bg-accent/60 border-primary/25 rounded-2xl border p-5'>
+    <section className='bg-accent/60 border-primary/25 rounded-xl border p-4'>
       <h2 className='text-primary-strong text-[11px] font-semibold tracking-wide uppercase'>{t('title')}</h2>
 
       {/* Icon vương miện bên trái, tên gói và hạn dùng bên phải — Hình S24. */}
@@ -91,7 +91,7 @@ export function PlanCard({ designAllowance }: PlanCardProps = {}) {
 
       {/* Dẫn sang trang Gói đăng ký (mục VII). Nút VIỀN, không tô đặc: hành
           động chính của cột trái là "Bảng điều khiển giám sát" ở thẻ dưới. */}
-      <Button asChild variant='outline' className='bg-card mt-4 w-full'>
+      <Button asChild variant='outline' size='sm' className='bg-card mt-4 h-8 w-full text-xs'>
         <Link href={ROUTES.PLANS}>{t('upgrade')}</Link>
       </Button>
     </section>

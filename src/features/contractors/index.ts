@@ -6,6 +6,7 @@
  */
 export { BriefForm } from './components/brief-form'
 export { BriefReview } from './components/brief-review'
+export { AccountDossierList } from './components/account-dossier-list'
 export { ContractorCompare } from './components/contractor-compare'
 export { ContractorLanding } from './components/contractor-landing'
 export { ContractorMatches } from './components/contractor-matches'

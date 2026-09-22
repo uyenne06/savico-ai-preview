@@ -27,7 +27,10 @@ export interface ChatContextStore {
   waitingFlow: ChatFlow | null
   /** Khung chat nổi góc phải dưới đang mở hay đóng (quy ước xuyên suốt, mục I). */
   panelOpen: boolean
+  /** Ẩn toàn bộ AI dock tạm thời khi một UI ưu tiên cao hơn (vd. biên nhận) đang mở. */
+  dockSuppressed: boolean
   setContext: (context: ProjectChatContext | null) => void
   setWaitingFlow: (flow: ChatFlow | null) => void
   setPanelOpen: (open: boolean) => void
+  setDockSuppressed: (suppressed: boolean) => void
 }

@@ -7,8 +7,16 @@ export { ConsultantDirectory } from './components/consultant-directory'
 export { ConsultantDetail } from './components/consultant-detail'
 export { ConsultantCard } from './components/consultant-card'
 export { ConsultantHighlights } from './components/consultant-highlights'
+export { ConsultationHistory } from './components/consultation-history'
 export { ConsultTransitionStateProvider } from './components/consult-transition-state'
-export { useConsultants, useConsultant, useAvailability, useBookConsultation } from './hooks/use-consultation'
+export {
+  useConsultants,
+  useConsultant,
+  useAvailability,
+  useBookConsultation,
+  useMyConsultations,
+  useCancelConsultation
+} from './hooks/use-consultation'
 export {
   filterConsultants,
   findMatchRange,
@@ -34,6 +42,8 @@ export type {
   ConsultantWork,
   ConsultationBooking,
   ConsultationBookingStatus,
+  ConsultationHistoryBooking,
+  ConsultationHistoryStatus,
   ConsultationDay,
   ConsultationSession,
   ConsultationSlot

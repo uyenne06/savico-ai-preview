@@ -15,7 +15,9 @@ export const useChatContextStore = create<ChatContextStore>()((set) => ({
   context: null,
   waitingFlow: null,
   panelOpen: false,
+  dockSuppressed: false,
   setContext: (context) => set({ context }),
   setWaitingFlow: (waitingFlow) => set({ waitingFlow }),
-  setPanelOpen: (panelOpen) => set({ panelOpen })
+  setPanelOpen: (panelOpen) => set({ panelOpen }),
+  setDockSuppressed: (dockSuppressed) => set({ dockSuppressed })
 }))

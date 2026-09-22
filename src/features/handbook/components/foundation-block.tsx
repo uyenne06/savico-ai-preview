@@ -25,6 +25,7 @@ import {
   Wallet,
   X
 } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
 import { Link } from '@/i18n/navigation'
@@ -172,6 +173,7 @@ function StepToggleIcon({ open }: { open: boolean }) {
  */
 export function FoundationBlock() {
   const t = useTranslations('handbook.foundation')
+  const searchParams = useSearchParams()
   // "Mở nhanh bài viết" / "Thu gọn" / "Xem chi tiết" là chữ của HÀNH VI mở nhanh,
   // dùng chung với khối "Tất cả bài viết" — hai khối cùng một thao tác thì phải
   // cùng một câu, để mỗi khối một bản dịch riêng là admin sửa một chỗ hụt chỗ kia.
@@ -210,6 +212,7 @@ export function FoundationBlock() {
   const ctaPointerInsideRef = useRef(false)
   const ctaFocusedRef = useRef(false)
   const ctaClickedRef = useRef(false)
+  const deepLinkAppliedRef = useRef<string | null>(null)
 
   const clearCtaIdleLoop = useCallback(() => {
     if (nudgeTimerRef.current) {
@@ -791,6 +794,48 @@ export function FoundationBlock() {
   const counts = useMemo(() => countArticlesByTopic(articles ?? []), [articles])
   const activeStage = stages?.find((stage) => stage.id === panelStage)
   const outgoingStage = stages?.find((stage) => stage.id === outgoingPanelStage)
+
+  useEffect(() => {
+    if (!stages?.length) return
+    const requestedStageId = searchParams.get('stage')
+    if (!requestedStageId) return
+
+    const requestedStage = stages.find((stage) => stage.id === requestedStageId)
+    if (!requestedStage) return
+    const requestedTopicId = searchParams.get('topic')
+    const requestedTopic = requestedTopicId
+      ? requestedStage.topics.find((topic) => topic.id === requestedTopicId)
+      : undefined
+    const targetTopicId = requestedTopic?.id ?? requestedStage.topics[0]?.id ?? null
+    const deepLinkKey = `${requestedStage.id}:${targetTopicId ?? ''}`
+    if (deepLinkAppliedRef.current === deepLinkKey) return
+    deepLinkAppliedRef.current = deepLinkKey
+
+    setOpenArticle(null)
+    setOpenStage(requestedStage.id)
+    setPanelStage(requestedStage.id)
+    setOpenTopic(targetTopicId)
+    setOutgoingPanelStage(null)
+    setOutgoingTopic(null)
+    setPanelPhase('opening')
+
+    let secondFrame = 0
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        const target = stagesHeadingRef.current ?? foundationRef.current
+        if (!target) return
+        const headerOffset =
+          Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--public-header-offset')) || 64
+        const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - headerOffset - 16)
+        window.scrollTo({ top, behavior: 'auto' })
+      })
+    })
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      window.cancelAnimationFrame(secondFrame)
+    }
+  }, [searchParams, stages])
 
   function toggleStage(id: HandbookStageId, firstTopicId?: string) {
     if (openStage === id) {

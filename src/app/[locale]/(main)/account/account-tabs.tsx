@@ -1,56 +1,86 @@
 'use client'
 
-import { Heart, LayoutGrid } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { CalendarDays, CreditCard, FolderOpen, Heart, LayoutGrid } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { LayoutGroup, motion, useReducedMotion } from 'motion/react'
+import { useTranslations } from 'next-intl'
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
-
-interface AccountTabsProps {
-  projects: { label: string; description: string; content: ReactNode }
-  favorites: { label: string; description: string; content: ReactNode }
-}
+import { Link, usePathname } from '@/i18n/navigation'
+import { ROUTES } from '@/shared/constants/routes'
+import { cn } from '@/shared/lib/utils'
 
 /**
- * "Dự án của tôi" và "Dự án yêu thích" là hai tab của cùng một khu vực (mục IV,
- * khu vực 2 và 3).
+ * Thanh điều hướng Account nhìn như tab nhưng dùng route thật.
  *
- * Xếp chồng dọc thì phần yêu thích nằm hẳn dưới đáy trang, ít ai cuộn tới; hai
- * danh sách này lại cùng bản chất "những gì tôi đã lưu" nên đặt cạnh nhau.
- * Server component không dùng được state nên phần tab nằm ở client component
- * này, nội dung hai tab vẫn do lớp page dựng và truyền vào.
+ * Mỗi mục có URL riêng nên reload, bookmark và browser Back/Forward luôn giữ
+ * đúng màn. Nội dung từng route được compose ở app layer, không nằm trong
+ * client state của thanh điều hướng.
  */
-export function AccountTabs({ projects, favorites }: AccountTabsProps) {
+export function AccountNav() {
+  const t = useTranslations('account')
+  const pathname = usePathname()
+  const reduceMotion = useReducedMotion()
+  const tabs: Array<{ href: string; icon: LucideIcon; label: string; badge?: string }> = [
+    { href: ROUTES.ACCOUNT_PROJECTS, icon: LayoutGrid, label: t('projects.title') },
+    { href: ROUTES.ACCOUNT_FAVORITES, icon: Heart, label: t('favorites.title') },
+    { href: ROUTES.ACCOUNT_DOSSIERS, icon: FolderOpen, label: t('dossiers.title'), badge: t('new') },
+    { href: ROUTES.ACCOUNT_PURCHASES, icon: CreditCard, label: t('purchaseHistory.title'), badge: t('new') },
+    {
+      href: ROUTES.ACCOUNT_CONSULTATIONS,
+      icon: CalendarDays,
+      label: t('consultationHistory.title'),
+      badge: t('new')
+    }
+  ] as const
+
   return (
-    <Tabs defaultValue='projects'>
-      {/* Hình S24: hai viên thuốc lớn trong một khung viền, tab đang mở TÔ
-          XANH ĐẶC chữ trắng. Kiểu mặc định của primitive là nền xám nhạt với
-          viên trắng nổi lên — nhìn không ra cái nào đang mở. */}
-      <TabsList className='bg-card h-auto gap-1 rounded-xl border p-1'>
-        <TabsTrigger
-          value='projects'
-          className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 data-[state=active]:shadow-none'
-        >
-          <LayoutGrid className='size-4' />
-          {projects.label}
-        </TabsTrigger>
-        <TabsTrigger
-          value='favorites'
-          className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg px-4 py-2 data-[state=active]:shadow-none'
-        >
-          <Heart className='size-4' />
-          {favorites.label}
-        </TabsTrigger>
-      </TabsList>
+    <LayoutGroup id='account-route-tabs'>
+      <nav
+        aria-label={t('title')}
+        className='bg-card flex h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border p-1'
+      >
+        {tabs.map(({ href, icon: Icon, label, badge }) => {
+          const active = pathname === href
 
-      <TabsContent value='projects' className='mt-5 space-y-4'>
-        <p className='text-muted-foreground text-sm text-pretty'>{projects.description}</p>
-        {projects.content}
-      </TabsContent>
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? 'page' : undefined}
+              className={cn(
+                'group relative inline-flex shrink-0 items-center justify-center rounded-lg px-3 py-2 text-xs font-medium transition-colors xl:px-4',
+                active ? 'text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              {active ? (
+                <motion.span
+                  layoutId='account-active-pill'
+                  aria-hidden
+                  className='bg-primary-strong absolute inset-0 rounded-lg'
+                  transition={
+                    reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 36, mass: 0.72 }
+                  }
+                />
+              ) : null}
 
-      <TabsContent value='favorites' className='mt-5 space-y-4'>
-        <p className='text-muted-foreground text-sm text-pretty'>{favorites.description}</p>
-        {favorites.content}
-      </TabsContent>
-    </Tabs>
+              <span className='relative z-10 inline-flex items-center gap-1.5'>
+                <Icon className='size-3.5' />
+                {label}
+                {badge ? (
+                  <span
+                    className={cn(
+                      'rounded px-1.5 py-0.5 text-[9px] font-semibold',
+                      active ? 'bg-primary-foreground/15 text-primary-foreground' : 'bg-accent text-primary-strong'
+                    )}
+                  >
+                    {badge}
+                  </span>
+                ) : null}
+              </span>
+            </Link>
+          )
+        })}
+      </nav>
+    </LayoutGroup>
   )
 }

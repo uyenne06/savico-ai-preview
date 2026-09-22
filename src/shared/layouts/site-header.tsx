@@ -45,6 +45,7 @@ export function SiteHeader({ UserMenu, onCreateProject }: SiteHeaderProps = {}) 
   const [hidden, setHidden] = useState(false)
   const [pastTitle, setPastTitle] = useState(false)
   const onHandbook = pathname === ROUTES.HANDBOOK || pathname.startsWith(`${ROUTES.HANDBOOK}/`)
+  const onHandbookArticle = pathname.startsWith(`${ROUTES.HANDBOOK}/bai-viet/`)
   const onDesign = pathname === ROUTES.DESIGN || pathname.startsWith(`${ROUTES.DESIGN}/`)
 
   useEffect(() => {
@@ -185,6 +186,7 @@ export function SiteHeader({ UserMenu, onCreateProject }: SiteHeaderProps = {}) 
           <SiteNavMobile />
         </div>
       </div>
+      {onHandbookArticle ? <span data-handbook-reading-progress aria-hidden='true' /> : null}
     </header>
   )
 }

@@ -72,6 +72,8 @@ export interface Order {
   createdAt: string
   /** Hạn của mã QR hiện tại (ISO) — hết hạn thì tạo lại mã (S04). */
   expiresAt: string
+  /** Thời điểm người dùng báo đã chuyển khoản; dùng để giữ bộ đếm S06 qua reload. */
+  verifyingStartedAt?: string
   transfer: TransferInfo
 }
 

@@ -36,6 +36,7 @@ import { Button } from '@/shared/components/ui/button'
 import { checkoutConfirmRoute } from '@/shared/constants/routes'
 import { usePageEntrance } from '@/shared/hooks'
 import { cn } from '@/shared/lib/utils'
+import { rememberCheckoutReturn } from '@/shared/lib/checkout-return'
 import { formatCurrency } from '@/shared/utils'
 import {
   ADDONS,
@@ -435,6 +436,7 @@ function PackageCard({
           <Button asChild size='lg' className={cn('mt-5 w-full', item.recommended && ORANGE_BUTTON)}>
             <Link
               href={checkoutConfirmRoute(item.id, projectId)}
+              onClick={() => rememberCheckoutReturn(item.id, projectId)}
               className={cn('supervision-buy group', item.recommended && 'supervision-buy-control')}
             >
               {t('choose', { tier: tTiers(item.tier) })}
@@ -487,53 +489,16 @@ function InspectionBand({ item }: { item: SupervisionPackage }) {
 
 function SupervisionPrice({ value, index }: { value: number; index: number }) {
   const locale = useLocale() as Locale
-  const [number, setNumber] = useState(Math.round(value * 0.14))
-  const done = useRef(false)
-
-  useEffect(() => {
-    if (done.current) return
-    const delay = index === 2 ? 2050 : 1840
-    const duration = index === 2 ? 1050 : 880
-    let controls: { stop: () => void } | undefined
-    const timer = window.setTimeout(() => {
-      controls = animate(Math.round(value * 0.14), value, {
-        duration: duration / 1000,
-        ease: [0.16, 1, 0.3, 1],
-        onUpdate: (current) => setNumber(Math.round(current)),
-        onComplete: () => {
-          done.current = true
-        }
-      })
-    }, delay)
-    return () => {
-      clearTimeout(timer)
-      controls?.stop()
-    }
-  }, [index, value])
-
   const final = formatCurrency(value, locale)
-  const digits = String(number).padStart(String(value).length, ' ')
-  let digitIndex = 0
 
   return (
     <motion.span
       className='supervision-price inline-block tabular-nums'
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.35, delay: index === 2 ? 2.05 : 1.84 }}
+      initial={{ opacity: 0, y: 6, scale: 0.985 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.42, delay: index === 2 ? 2.05 : 1.84, ease: [0.22, 1, 0.36, 1] }}
     >
-      <span className='sr-only'>{final}</span>
-      <span aria-hidden>
-        {[...final].map((char, charIndex) =>
-          /\d/.test(char) ? (
-            <span key={charIndex} className='inline-block w-[0.61em]'>
-              {digits[digitIndex++]}
-            </span>
-          ) : (
-            <span key={charIndex}>{char}</span>
-          )
-        )}
-      </span>
+      {final}
     </motion.span>
   )
 }
@@ -767,7 +732,10 @@ function ComparisonTable({ packages, projectId }: { packages: SupervisionPackage
                         size='sm'
                         className={cn('supervision-table-buy', item.recommended && ORANGE_BUTTON)}
                       >
-                        <Link href={checkoutConfirmRoute(item.id, projectId)}>
+                        <Link
+                          href={checkoutConfirmRoute(item.id, projectId)}
+                          onClick={() => rememberCheckoutReturn(item.id, projectId)}
+                        >
                           {tPricing('choose', { tier: tTiers(tier) })}
                         </Link>
                       </Button>
@@ -1329,46 +1297,15 @@ function CoreRow({
 
 function SupervisionTablePrice({ value, index, started }: { value: number; index: number; started: boolean }) {
   const locale = useLocale() as Locale
-  const [number, setNumber] = useState(0)
-  const [finished, setFinished] = useState(false)
-  const done = useRef(false)
-
-  useEffect(() => {
-    if (!started || done.current) return
-    const controls = animate(0, value, {
-      duration: 0.72 + index * 0.16,
-      delay: index * 0.13,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate: (current) => setNumber(Math.round(current)),
-      onComplete: () => {
-        done.current = true
-        setFinished(true)
-      }
-    })
-    return () => controls.stop()
-  }, [index, started, value])
-
   const final = formatCurrency(value, locale)
-  const digits = String(number).padStart(String(value).length, ' ')
-  let digitIndex = 0
   return (
     <motion.span
       className='supervision-table-price inline-block tabular-nums'
-      animate={finished ? { scale: [1, 1.03, 1] } : undefined}
-      transition={{ duration: 0.22 }}
+      initial={false}
+      animate={started ? { opacity: 1, y: 0 } : { opacity: 0, y: 4 }}
+      transition={{ duration: 0.34, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
     >
-      <span className='sr-only'>{final}</span>
-      <span aria-hidden>
-        {[...final].map((char, charIndex) =>
-          /\d/.test(char) ? (
-            <span key={charIndex} className='inline-block w-[0.61em]'>
-              {digits[digitIndex++]}
-            </span>
-          ) : (
-            <span key={charIndex}>{char}</span>
-          )
-        )}
-      </span>
+      {final}
     </motion.span>
   )
 }

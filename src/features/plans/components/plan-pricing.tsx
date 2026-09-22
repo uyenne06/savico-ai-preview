@@ -37,10 +37,23 @@ import { Skeleton } from '@/shared/components/ui/skeleton'
 import { checkoutConfirmRoute } from '@/shared/constants/routes'
 import { usePageEntrance } from '@/shared/hooks'
 import { cn } from '@/shared/lib/utils'
+import { rememberCheckoutReturn } from '@/shared/lib/checkout-return'
 import { PLAN_COMPARISON, PLAN_VALUE_ROWS, type PlanCell, type PlanValueKey } from '../constants/plan-comparison'
 import { usePlans } from '../hooks/use-plans'
 
 const TIERS: readonly PlanTier[] = ['basic', 'advanced', 'pro'] as const
+
+/**
+ * Cả ba giá bắt đầu cùng một nhịp nhưng kết thúc lệch nhau BASIC → PLUS → PRO.
+ * Duration dùng ở cả counter và mốc hiện dòng "Thanh toán 1 lần" để hai phần
+ * không thể lệch choreography.
+ */
+const PRICE_COUNT_DURATION_MS: Record<PlanTier, number> = {
+  basic: 1080,
+  advanced: 1320,
+  pro: 1560
+}
+const PRICE_SETTLE_PULSE_MS = 240
 
 /** Gói được tô cam xuyên suốt trang (Hình S01) — cột PLUS của bảng so sánh. */
 const POPULAR_TIER: PlanTier = 'advanced'
@@ -128,7 +141,7 @@ function PlanPricingContent() {
           </div>
         </div>
         <Button asChild size='lg' className='brand-green-button plan-cta-action'>
-          <Link href={checkoutConfirmRoute('advanced')}>
+          <Link href={checkoutConfirmRoute('advanced')} onClick={() => rememberCheckoutReturn('advanced')}>
             {t('ctaBand.action')}
             <ArrowRight className='plan-cta-arrow size-4' />
           </Link>
@@ -423,7 +436,9 @@ function ComparisonTable({ plans }: { plans: SubscriptionPlan[] }) {
                           plan.popular && 'plan-table-buy-popular'
                         )}
                       >
-                        <Link href={checkoutConfirmRoute(plan.id)}>{t(`cta.${tier}`)}</Link>
+                        <Link href={checkoutConfirmRoute(plan.id)} onClick={() => rememberCheckoutReturn(plan.id)}>
+                          {t(`cta.${tier}`)}
+                        </Link>
                       </Button>
                     ) : null}
                   </motion.td>
@@ -625,6 +640,7 @@ function PlanCards({ plans }: { plans: SubscriptionPlan[] }) {
   const [readyImages, setReadyImages] = useState(false)
   const [pricesStarted, setPricesStarted] = useState(false)
   const [pricesDone, setPricesDone] = useState(false)
+  const [pricesInstant, setPricesInstant] = useState(false)
   const [gift, setGift] = useState<SubscriptionPlan | null>(null)
   const [giftOpen, setGiftOpen] = useState(false)
   const giftOrigin = useRef<HTMLButtonElement | null>(null)
@@ -706,21 +722,13 @@ function PlanCards({ plans }: { plans: SubscriptionPlan[] }) {
     const startPrices = () => {
       if (started || cancelled) return
       started = true
+      setPricesStarted(true)
       timers.push(
         setTimeout(
           () => {
-            if (cancelled) return
-            setPricesStarted(true)
-            timers.push(
-              setTimeout(
-                () => {
-                  if (!cancelled) setPricesDone(true)
-                },
-                reduceMotion ? 0 : 1900
-              )
-            )
+            if (!cancelled) setPricesDone(true)
           },
-          reduceMotion ? 0 : 1650
+          reduceMotion ? 0 : PRICE_COUNT_DURATION_MS.pro + PRICE_SETTLE_PULSE_MS
         )
       )
     }
@@ -731,7 +739,7 @@ function PlanCards({ plans }: { plans: SubscriptionPlan[] }) {
     if (
       prices.some((el) => {
         const rect = el.getBoundingClientRect()
-        return rect.top < innerHeight
+        return rect.top < innerHeight && rect.bottom > 0
       })
     )
       startPrices()
@@ -751,7 +759,9 @@ function PlanCards({ plans }: { plans: SubscriptionPlan[] }) {
       lastY = scrollY
       lastTime = now
       if (fast && root.getBoundingClientRect().top < 0) {
+        started = true
         root.dataset.fast = 'true'
+        setPricesInstant(true)
         setPricesStarted(true)
         setPricesDone(true)
       }
@@ -791,6 +801,7 @@ function PlanCards({ plans }: { plans: SubscriptionPlan[] }) {
             imagesReady={readyImages}
             pricesStarted={pricesStarted}
             pricesDone={pricesDone}
+            pricesInstant={pricesInstant}
             dimmed={(selected ?? hovered) !== null && (selected ?? hovered) !== plan.id}
             onHover={() => setHovered(plan.id)}
             selected={selected}
@@ -844,6 +855,7 @@ function PlanCard({
   imagesReady,
   pricesStarted,
   pricesDone,
+  pricesInstant,
   dimmed,
   onHover,
   selected,
@@ -855,6 +867,7 @@ function PlanCard({
   imagesReady: boolean
   pricesStarted: boolean
   pricesDone: boolean
+  pricesInstant: boolean
   dimmed: boolean
   onHover: () => void
   selected: string | null
@@ -983,7 +996,13 @@ function PlanCard({
             </p>
 
             <p className='mt-3 text-center'>
-              <PlanPrice value={plan.price} index={index} started={pricesStarted} popular={!!plan.popular} />
+              <PlanPrice
+                value={plan.price}
+                tier={plan.tier}
+                started={pricesStarted}
+                instant={pricesInstant}
+                popular={!!plan.popular}
+              />
               <span
                 className={cn(
                   'text-muted-foreground block text-[3.9cqw] transition-opacity duration-300',
@@ -1098,45 +1117,63 @@ function PlanCard({
 
 function PlanPrice({
   value,
-  index,
+  tier,
   started,
+  instant,
   popular
 }: {
   value: number
-  index: number
+  tier: PlanTier
   started: boolean
+  instant: boolean
   popular: boolean
 }) {
   const locale = useLocale() as Locale
-  const ref = useRef<HTMLSpanElement>(null)
   const { reduceMotion } = usePricingMotion()
-  const [number, setNumber] = useState(Math.round(value * 0.12))
+  const ref = useRef<HTMLSpanElement>(null)
+  const startValue = value <= 0 ? 0 : 10 ** Math.max(0, String(Math.trunc(value)).length - 1)
+  const [number, setNumber] = useState(startValue)
   const done = useRef(false)
+
   useEffect(() => {
     if (!started || done.current) return
-    const duration = 1350 + index * 240
-    let frame = 0
-    const start = performance.now()
-    const tick = (now: number) => {
-      const rect = ref.current?.getBoundingClientRect()
-      const skip =
-        reduceMotion ||
-        ref.current?.closest('[data-fast="true"]') ||
-        (rect && (rect.bottom < 0 || rect.top > innerHeight))
-      const progress = skip ? 1 : Math.min(1, (now - start) / duration)
-      setNumber(Math.round(value * (0.12 + 0.88 * (1 - Math.pow(1 - progress, 4)))))
-      if (progress < 1) frame = requestAnimationFrame(tick)
-      else {
-        done.current = true
-        if (!skip) ref.current?.animate([{ scale: '1' }, { scale: '1.035' }, { scale: '1' }], { duration: 240 })
-      }
+
+    if (instant || reduceMotion) {
+      done.current = true
+      const sync = window.setTimeout(() => setNumber(value), 0)
+      return () => window.clearTimeout(sync)
     }
-    frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
-  }, [started, value, index, reduceMotion])
+
+    const duration = PRICE_COUNT_DURATION_MS[tier]
+    const startAt = performance.now()
+    let frame = 0
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - startAt) / duration)
+      const eased = 1 - Math.pow(1 - progress, 4)
+      setNumber(Math.round(startValue + (value - startValue) * eased))
+
+      if (progress < 1) {
+        frame = window.requestAnimationFrame(tick)
+        return
+      }
+
+      done.current = true
+      setNumber(value)
+      ref.current?.animate([{ scale: '1' }, { scale: '1.035' }, { scale: '1' }], {
+        duration: PRICE_SETTLE_PULSE_MS,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
+      })
+    }
+
+    frame = window.requestAnimationFrame(tick)
+    return () => window.cancelAnimationFrame(frame)
+  }, [instant, reduceMotion, started, startValue, tier, value])
+
   const final = formatPriceTag(value, locale)
-  const digits = String(reduceMotion ? value : number).padStart(String(value).length, ' ')
-  let digit = 0
+  const digits = String(instant || reduceMotion ? value : number).padStart(String(Math.trunc(value)).length, '0')
+  let digitIndex = 0
+
   return (
     <span
       ref={ref}
@@ -1145,16 +1182,17 @@ function PlanPrice({
         'inline-block text-[10cqw] font-bold tracking-tight tabular-nums',
         popular ? 'text-brand-orange' : 'text-primary-strong'
       )}
+      style={{ visibility: started || reduceMotion || instant ? 'visible' : 'hidden' }}
     >
       <span className='sr-only'>{final}</span>
       <span aria-hidden>
-        {[...final].map((char, i) =>
+        {[...final].map((char, charIndex) =>
           /\d/.test(char) ? (
-            <span key={i} className='inline-block w-[.62em]'>
-              {digits[digit++]}
+            <span key={charIndex} className='inline-block w-[0.62em]'>
+              {digits[digitIndex++]}
             </span>
           ) : (
-            <span key={i}>{char}</span>
+            <span key={charIndex}>{char}</span>
           )
         )}
       </span>
@@ -1192,6 +1230,7 @@ function PlanBuyButton({
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
     e.preventDefault()
     if (pending || disabled) return
+    rememberCheckoutReturn(plan.id)
     setPending(true)
     onSelect()
     const main = e.currentTarget.closest('main')

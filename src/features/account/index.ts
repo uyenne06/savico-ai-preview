@@ -6,5 +6,7 @@
 export { AccountInfo } from './components/account-info'
 export { FavoriteGrid } from './components/favorite-grid'
 export { PlanCard } from './components/plan-card'
+export { PurchaseHistory } from './components/purchase-history'
 export { useAccountPlan } from './hooks/use-account-plan'
-export type { AccountPlan, PlanAllowance } from './types/account.types'
+export { usePurchaseHistory } from './hooks/use-purchase-history'
+export type { AccountPlan, AccountPurchaseHistory, PlanAllowance } from './types/account.types'
