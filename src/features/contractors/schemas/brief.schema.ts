@@ -22,33 +22,49 @@ export const BRIEF_NOTE_MAX_LENGTH = 1000
  * Bước 1 — Tự tạo hồ sơ dự án (S10).
  *
  * Các trường có dấu * trên giao diện là bắt buộc: tên dự án, loại công trình,
- * diện tích đất, hiện trạng, quy mô, địa chỉ, ngân sách dự kiến, phạm vi thi
- * công và mô tả nhu cầu. "Dự kiến khởi công" và tài liệu đính kèm không bắt buộc.
+ * diện tích đất, hiện trạng, địa chỉ, ngân sách dự kiến, phạm vi thi công và mô
+ * tả nhu cầu. Số tầng/tum bắt buộc với loại nhà nhưng ẩn với căn hộ. "Dự kiến
+ * khởi công" và tài liệu đính kèm không bắt buộc.
  */
 export function createBriefSchema(m: BriefSchemaMessages) {
-  return z.object({
-    name: z.string().trim().min(1, { message: m.required }).max(BRIEF_NAME_MAX_LENGTH, { message: m.nameMaxLength }),
-    buildingType: z.string().trim().min(1, { message: m.required }),
-    // Giữ dạng chuỗi: ô nhập trả về string, ép kiểu ngay trong schema sẽ làm
-    // kiểu của form lệch với kiểu của input. Chuyển sang số ở lúc submit.
-    landArea: z.string().trim().regex(POSITIVE_NUMBER, { message: m.areaPositive }),
-    siteCondition: z.enum(SITE_CONDITIONS),
-    scale: z.enum(PROJECT_SCALES),
-    // Chỉ giữ MÃ hành chính trong form; tên tỉnh/phường tra lại từ danh mục lúc
-    // lưu. Giữ cả hai trong form thì chúng lệch nhau ngay lần đầu người dùng đổi
-    // tỉnh mà quên cập nhật tên.
-    provinceCode: z.string().min(1, { message: m.required }),
-    wardCode: z.string().min(1, { message: m.required }),
-    street: z.string().trim().min(1, { message: m.required }),
-    budget: z.string().trim().regex(POSITIVE_NUMBER, { message: m.budgetPositive }),
-    startWindow: z.enum(START_WINDOWS),
-    scope: z.enum(CONSTRUCTION_SCOPES),
-    scopeNote: z
-      .string()
-      .trim()
-      .min(1, { message: m.noteRequired })
-      .max(BRIEF_NOTE_MAX_LENGTH, { message: m.noteMaxLength })
-  })
+  return z
+    .object({
+      name: z.string().trim().min(1, { message: m.required }).max(BRIEF_NAME_MAX_LENGTH, { message: m.nameMaxLength }),
+      buildingType: z.string().trim().min(1, { message: m.required }),
+      /** Mã CMS dùng để áp đúng các trường điều kiện; nhãn vẫn được lưu để hiển thị hồ sơ. */
+      buildingTypeId: z.string().nullable(),
+      // Giữ dạng chuỗi: ô nhập trả về string, ép kiểu ngay trong schema sẽ làm
+      // kiểu của form lệch với kiểu của input. Chuyển sang số ở lúc submit.
+      landArea: z.string().trim().regex(POSITIVE_NUMBER, { message: m.areaPositive }),
+      siteCondition: z.enum(SITE_CONDITIONS),
+      scale: z.enum(PROJECT_SCALES).nullable(),
+      hasAttic: z.boolean().nullable(),
+      // Chỉ giữ MÃ hành chính trong form; tên tỉnh/phường tra lại từ danh mục lúc
+      // lưu. Giữ cả hai trong form thì chúng lệch nhau ngay lần đầu người dùng đổi
+      // tỉnh mà quên cập nhật tên.
+      provinceCode: z.string().min(1, { message: m.required }),
+      wardCode: z.string().min(1, { message: m.required }),
+      street: z.string().trim().min(1, { message: m.required }),
+      budget: z.string().trim().regex(POSITIVE_NUMBER, { message: m.budgetPositive }),
+      startWindow: z.enum(START_WINDOWS),
+      scope: z.enum(CONSTRUCTION_SCOPES),
+      scopeNote: z
+        .string()
+        .trim()
+        .min(1, { message: m.noteRequired })
+        .max(BRIEF_NOTE_MAX_LENGTH, { message: m.noteMaxLength })
+    })
+    .superRefine((values, context) => {
+      // Đồng bộ với luồng Tạo dự án mới: căn hộ chỉ có một mặt sàn và không có tum.
+      if (!values.buildingType || values.buildingTypeId === 'apartment') return
+
+      if (!values.scale) {
+        context.addIssue({ code: 'custom', path: ['scale'], message: m.required })
+      }
+      if (values.hasAttic === null) {
+        context.addIssue({ code: 'custom', path: ['hasAttic'], message: m.required })
+      }
+    })
 }
 
 export type BriefFormValues = z.infer<ReturnType<typeof createBriefSchema>>

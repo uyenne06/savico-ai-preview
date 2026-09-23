@@ -8,6 +8,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  CircleAlert,
   CircleCheck,
   Clock,
   Download,
@@ -32,14 +33,14 @@ import {
 } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useLocale, useTranslations } from 'next-intl'
-import { useEffect, useRef, useState } from 'react'
+import { cloneElement, isValidElement, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { toast } from 'sonner'
 
 import { Link, useRouter } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { Photo, revealContainerVariants, revealEase, revealItemVariants, RevealPhoto } from '@/shared/components/common'
 import { Button } from '@/shared/components/ui/button'
+import { Checkbox } from '@/shared/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -49,8 +50,18 @@ import {
   DialogTitle
 } from '@/shared/components/ui/dialog'
 import { Skeleton } from '@/shared/components/ui/skeleton'
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/shared/components/ui/sheet'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle
+} from '@/shared/components/ui/sheet'
 import { Tabs, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip'
 import {
   CONTRACTOR_PREVIEW_ID,
   contractorBriefRoute,
@@ -240,7 +251,6 @@ function InviteButton({
 export function ContractorProfile({ projectId, contractorId, tab }: ContractorProfileProps) {
   const t = useTranslations('contractors.firm')
   const tCommon = useTranslations('contractors.common')
-  const tGlobal = useTranslations('common')
   const locale = useLocale() as Locale
   const router = useRouter()
 
@@ -298,7 +308,6 @@ export function ContractorProfile({ projectId, contractorId, tab }: ContractorPr
 
   /** Đang xem ảnh nào trong hộp phóng — `null` là đang đóng (mục 6). */
   const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null)
-  const [reportOpen, setReportOpen] = useState(false)
 
   /** Nút "Mời báo giá" thở một nhịp sau khi hiện (mục 11). */
   const [inviteBreathe, setInviteBreathe] = useState(false)
@@ -524,6 +533,52 @@ export function ContractorProfile({ projectId, contractorId, tab }: ContractorPr
                   </TabsTrigger>
                 ))}
               </TabsList>
+
+              {tab === 'projects' ? (
+                <FeaturedProjects
+                  contractor={contractor}
+                  filter={projectFilter}
+                  onClearFilter={() => setProjectFilter(null)}
+                  inviteAction={
+                    <InviteButton
+                      projectId={projectId}
+                      contractorId={contractorId}
+                      contractor={contractor}
+                      preview={preview}
+                      invited={invited}
+                      inviteLocked={inviteLocked}
+                      navigating={navigatingInvite}
+                      onNavigate={() => setNavigatingInvite(true)}
+                      onOpenPicker={openPicker}
+                      size='sm'
+                    />
+                  }
+                  detailed
+                />
+              ) : null}
+              {tab === 'legal' ? (
+                <div className='px-4 pt-4 pb-5 sm:px-5 sm:pt-5 sm:pb-6'>
+                  <LegalChecks
+                    contractor={contractor}
+                    detailed
+                    scanUnlocked={invited}
+                    inviteAction={
+                      <InviteButton
+                        projectId={projectId}
+                        contractorId={contractorId}
+                        contractor={contractor}
+                        preview={preview}
+                        invited={invited}
+                        inviteLocked={inviteLocked}
+                        navigating={navigatingInvite}
+                        onNavigate={() => setNavigatingInvite(true)}
+                        onOpenPicker={openPicker}
+                        size='sm'
+                      />
+                    }
+                  />
+                </div>
+              ) : null}
             </motion.div>
 
             {/* Mốc mỏng cho `usePastElement` — CÙNG mẫu với bảng so sánh
@@ -549,14 +604,6 @@ export function ContractorProfile({ projectId, contractorId, tab }: ContractorPr
                       <LegalChecks contractor={contractor} />
                     </>
                   ) : null}
-                  {tab === 'projects' ? (
-                    <FeaturedProjects
-                      contractor={contractor}
-                      filter={projectFilter}
-                      onClearFilter={() => setProjectFilter(null)}
-                    />
-                  ) : null}
-                  {tab === 'legal' ? <LegalChecks contractor={contractor} /> : null}
                   {tab === 'partnership' ? <PartnershipTab contractor={contractor} /> : null}
                 </TabPanel>
               </AnimatePresence>
@@ -664,15 +711,6 @@ export function ContractorProfile({ projectId, contractorId, tab }: ContractorPr
             <Lock className='mt-0.5 size-3.5 shrink-0' />
             <span>{t('contactLocked')}</span>
           </p>
-
-          <button
-            type='button'
-            onClick={() => setReportOpen(true)}
-            className='text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-xs'
-          >
-            <FileText className='size-3.5' />
-            {t('report')}
-          </button>
         </motion.aside>
       </div>
 
@@ -765,28 +803,6 @@ export function ContractorProfile({ projectId, contractorId, tab }: ContractorPr
             document.body
           )
         : null}
-
-      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
-        <DialogContent className='sm:max-w-sm'>
-          <DialogHeader>
-            <DialogTitle>{t('reportConfirmTitle')}</DialogTitle>
-            <DialogDescription>{t('reportConfirmBody')}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant='outline' onClick={() => setReportOpen(false)}>
-              {tGlobal('cancel')}
-            </Button>
-            <Button
-              onClick={() => {
-                setReportOpen(false)
-                toast.success(t('reportSent'))
-              }}
-            >
-              {t('reportConfirmAction')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <PhotoLightbox
         photos={contractor.photos}
@@ -1102,20 +1118,245 @@ function PartnershipSummary({ contractor }: { contractor: Contractor }) {
 function FeaturedProjects({
   contractor,
   filter,
-  onClearFilter
+  onClearFilter,
+  inviteAction,
+  detailed = false
 }: {
   contractor: Contractor
   filter?: string | null
   onClearFilter?: () => void
+  inviteAction?: React.ReactNode
+  detailed?: boolean
 }) {
   const t = useTranslations('contractors.firm')
+  const reduceMotion = useReducedMotion()
   const [selectedProject, setSelectedProject] = useState<ContractorProject | null>(null)
+  const [verifiedOnly, setVerifiedOnly] = useState(false)
+  const [category, setCategory] = useState<'all' | NonNullable<ContractorProject['category']>>('all')
+  const [projectSort, setProjectSort] = useState<'latest' | 'oldest'>('latest')
+  const [showAllProjects, setShowAllProjects] = useState(false)
   /* Giữ nguyên toàn bộ nội dung. Khi có tag, dự án khớp được đưa lên đầu để người dùng
      vẫn nhìn thấy hồ sơ đầy đủ và thấy rõ chuyển động sắp xếp của các thẻ. */
-  const projects = [...contractor.featuredProjects].sort((left, right) => {
-    if (!filter) return 0
-    return Number(Boolean(right.tags?.includes(filter))) - Number(Boolean(left.tags?.includes(filter)))
-  })
+  const projects = [...contractor.featuredProjects]
+    .filter((project) => !verifiedOnly || project.verified)
+    .filter((project) => category === 'all' || project.category === category)
+    .sort((left, right) => {
+      const filterPriority = filter
+        ? Number(Boolean(right.tags?.includes(filter))) - Number(Boolean(left.tags?.includes(filter)))
+        : 0
+      return filterPriority || (projectSort === 'latest' ? right.year - left.year : left.year - right.year)
+    })
+
+  const projectFilters = [
+    { key: 'all' as const, count: contractor.similarProjects },
+    ...(['house', 'villa', 'renovation', 'factory'] as const).map((key) => ({
+      key,
+      count: contractor.featuredProjects.filter((project) => project.category === key).length
+    }))
+  ]
+  const visibleProjects = showAllProjects ? projects : projects.slice(0, 6)
+  const moreCount = Math.max(0, projects.length - visibleProjects.length)
+  const resultsKey = `${verifiedOnly}-${category}-${projectSort}-${filter ?? 'all'}`
+
+  if (detailed) {
+    return (
+      <>
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.32, ease: revealEase }}
+          className='border-t px-4 py-5 sm:px-5 sm:py-6'
+        >
+          <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
+            <p className='text-sm'>
+              <strong className='font-semibold'>
+                {t('projects.projectCount', { count: contractor.similarProjects })}
+              </strong>
+              <span className='text-muted-foreground'>
+                {' '}
+                · {t('projects.verifiedSummary', { count: contractor.verifiedProjects })}
+              </span>
+            </p>
+
+            <div className='flex flex-wrap items-center gap-3'>
+              <label className='hover:bg-muted/40 flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors'>
+                <Checkbox
+                  checked={verifiedOnly}
+                  onCheckedChange={(checked) => setVerifiedOnly(checked === true)}
+                  aria-label={t('projects.verifiedOnly')}
+                />
+                <span>{t('projects.verifiedOnly')}</span>
+              </label>
+              <Select value={projectSort} onValueChange={(value) => setProjectSort(value as 'latest' | 'oldest')}>
+                <SelectTrigger className='w-36' aria-label={t('projects.sortLabel')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='latest'>{t('projects.sortLatest')}</SelectItem>
+                  <SelectItem value='oldest'>{t('projects.sortOldest')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className='mt-4 flex gap-2 overflow-x-auto pb-1' role='group' aria-label={t('projects.filterLabel')}>
+            {projectFilters.map((item) => (
+              <button
+                key={item.key}
+                type='button'
+                aria-pressed={category === item.key}
+                onClick={() => setCategory(item.key)}
+                className={cn(
+                  'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors active:scale-[0.98]',
+                  category === item.key
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'hover:border-primary/40 hover:text-primary-strong bg-background'
+                )}
+              >
+                {t(`projects.filters.${item.key}`, { count: item.count })}
+              </button>
+            ))}
+          </div>
+
+          {filter ? (
+            <button
+              type='button'
+              onClick={onClearFilter}
+              className='bg-primary/10 text-primary-strong mt-3 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium'
+            >
+              {filter}
+              <X className='size-3' />
+              <span className='sr-only'>{t('clearProjectFilter')}</span>
+            </button>
+          ) : null}
+
+          {projects.length ? (
+            <motion.ul
+              key={resultsKey}
+              layout
+              initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.24, ease: revealEase }}
+              className='mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3'
+            >
+              <AnimatePresence mode='popLayout'>
+                {visibleProjects.map((project, index) => (
+                  <motion.li
+                    layout
+                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    whileHover={reduceMotion ? undefined : { y: -3 }}
+                    transition={{
+                      duration: reduceMotion ? 0 : 0.26,
+                      delay: reduceMotion ? 0 : Math.min(index % 6, 5) * 0.045,
+                      ease: revealEase
+                    }}
+                    key={project.id}
+                    className='overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-[0_14px_28px_-22px_rgba(24,80,42,0.62)]'
+                  >
+                    <button
+                      type='button'
+                      onClick={() => setSelectedProject(project)}
+                      className='group block size-full text-left active:scale-[0.995]'
+                    >
+                      <div className='bg-muted/30 relative aspect-[16/9] overflow-hidden'>
+                        {project.imageUrl ? (
+                          <RevealPhoto
+                            src={project.imageUrl}
+                            alt={project.name}
+                            className='size-full transition-transform duration-300 group-hover:scale-[1.02]'
+                            sizes='(max-width: 640px) 90vw, (max-width: 1280px) 40vw, 260px'
+                          />
+                        ) : (
+                          <div className='flex size-full items-center justify-center'>
+                            <ImageIcon className='text-muted-foreground/45 size-8' />
+                          </div>
+                        )}
+                        {project.verified ? (
+                          <span className='bg-background/95 text-primary-strong absolute top-2 left-2 inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium shadow-sm'>
+                            <CircleCheck className='size-3.5' />
+                            {t('projects.verifiedBadge')}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className='p-3'>
+                        <h3 className='group-hover:text-primary-strong text-sm font-semibold transition-colors'>
+                          {project.name}
+                        </h3>
+                        {project.tags?.length ? (
+                          <div className='mt-2 flex flex-wrap gap-1.5'>
+                            {project.tags.slice(0, 2).map((tag) => (
+                              <span
+                                key={tag}
+                                className='bg-muted rounded-md px-2 py-1 text-[11px] text-muted-foreground'
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                        <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-y-1 text-xs'>
+                          {project.dimensions ? <span className='pr-2'>{project.dimensions}</span> : null}
+                          {project.areaM2 ? (
+                            <span className='border-l px-2'>{t('projects.area', { area: project.areaM2 })}</span>
+                          ) : null}
+                          {project.scale ? <span className='border-l px-2'>{project.scale}</span> : null}
+                        </div>
+                        <p className='text-muted-foreground mt-2 text-xs'>
+                          {t('projects.completed', { year: project.year })}
+                        </p>
+                        {project.location ? (
+                          <p className='text-muted-foreground mt-2 flex items-start gap-1.5 text-xs'>
+                            <MapPin className='mt-0.5 size-3.5 shrink-0' />
+                            <span>{project.location}</span>
+                          </p>
+                        ) : null}
+                        <span className='text-primary-strong mt-3 inline-flex items-center gap-1 text-xs font-medium'>
+                          {t('projects.viewDetail')}
+                          <span className='transition-transform group-hover:translate-x-0.5'>→</span>
+                        </span>
+                      </div>
+                    </button>
+                  </motion.li>
+                ))}
+              </AnimatePresence>
+            </motion.ul>
+          ) : (
+            <motion.div
+              key={resultsKey}
+              initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className='bg-muted/30 mt-4 rounded-xl border border-dashed px-4 py-10 text-center text-sm text-muted-foreground'
+            >
+              {t('projects.empty')}
+            </motion.div>
+          )}
+
+          {moreCount > 0 ? (
+            <div className='mt-5 text-center'>
+              <Button type='button' variant='outline' size='sm' onClick={() => setShowAllProjects(true)}>
+                {t('projects.showMore', { count: moreCount })}
+              </Button>
+            </div>
+          ) : null}
+
+          <p className='text-muted-foreground mt-5 flex items-start gap-1.5 text-xs'>
+            <CircleCheck className='mt-0.5 size-3.5 shrink-0' />
+            <span>{t('projects.disclaimer')}</span>
+          </p>
+        </motion.section>
+
+        <ProjectDetailSheet
+          contractor={contractor}
+          project={selectedProject}
+          inviteAction={inviteAction}
+          onClose={() => setSelectedProject(null)}
+        />
+      </>
+    )
+  }
 
   return (
     <>
@@ -1192,45 +1433,247 @@ function FeaturedProjects({
         </motion.ul>
       </motion.section>
 
-      <Sheet open={Boolean(selectedProject)} onOpenChange={(open) => !open && setSelectedProject(null)}>
-        <SheetContent className='w-[92vw] sm:max-w-md'>
-          {selectedProject ? (
-            <>
-              <SheetHeader className='pr-10'>
-                <SheetTitle>{selectedProject.name}</SheetTitle>
-                <SheetDescription>
-                  {contractor.name}, {selectedProject.year}
-                </SheetDescription>
-              </SheetHeader>
-              {selectedProject.imageUrl ? (
-                <RevealPhoto
-                  src={selectedProject.imageUrl}
-                  alt={selectedProject.name}
-                  className='mx-4 aspect-4/3 rounded-xl'
-                  sizes='(max-width: 640px) 92vw, 448px'
-                />
-              ) : null}
-              {selectedProject.tags?.length ? (
-                <div className='flex flex-wrap gap-2 px-4'>
-                  {selectedProject.tags.map((tag) => (
-                    <span key={tag} className='bg-primary/10 text-primary-strong rounded-md px-2.5 py-1 text-xs'>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+      <ProjectDetailSheet contractor={contractor} project={selectedProject} onClose={() => setSelectedProject(null)} />
     </>
   )
 }
 
+function ProjectDetailSheet({
+  contractor,
+  project,
+  inviteAction,
+  onClose
+}: {
+  contractor: Contractor
+  project: ContractorProject | null
+  inviteAction?: React.ReactNode
+  onClose: () => void
+}) {
+  const t = useTranslations('contractors.firm.projects.detail')
+  const locale = useLocale() as Locale
+  const reduceMotion = useReducedMotion()
+  const [activeGalleryImage, setActiveGalleryImage] = useState<string | undefined>()
+
+  const projectType = project?.category ? t(`projectTypes.${project.category}`) : t('notUpdated')
+  const constructionScope = project?.constructionScope
+    ? t(`constructionScopes.${project.constructionScope}`)
+    : (project?.tags?.[1] ?? t('notUpdated'))
+  const contractorRole = project?.contractorRole ? t(`roles.${project.contractorRole}`) : t('roles.contractor')
+  const dimensions = [project?.dimensions, project?.areaM2 ? t('area', { area: project.areaM2 }) : null, project?.scale]
+    .filter(Boolean)
+    .join(' · ')
+  const constructionPeriod =
+    project?.constructionMonths && project.constructionStartedAt && project.constructionEndedAt
+      ? t('constructionPeriodValue', {
+          months: project.constructionMonths,
+          from: formatDate(project.constructionStartedAt, locale, { month: '2-digit', year: 'numeric' }),
+          to: formatDate(project.constructionEndedAt, locale, { month: '2-digit', year: 'numeric' })
+        })
+      : t('completedYear', { year: project?.year ?? '' })
+  const gallery = project ? [project.imageUrl, ...(project.galleryUrls ?? [])].filter(Boolean).slice(0, 3) : []
+  const activeImage = activeGalleryImage && gallery.includes(activeGalleryImage) ? activeGalleryImage : gallery[0]
+  const thumbnails = gallery.filter((imageUrl) => imageUrl !== activeImage).slice(0, 2)
+  const sheetInviteAction = isValidElement<{
+    onNavigate?: () => void
+    onOpenPicker?: () => void
+  }>(inviteAction)
+    ? cloneElement(inviteAction, {
+        onNavigate: () => {
+          onClose()
+          inviteAction.props.onNavigate?.()
+        },
+        onOpenPicker: () => {
+          onClose()
+          inviteAction.props.onOpenPicker?.()
+        }
+      })
+    : inviteAction
+
+  return (
+    <Sheet open={Boolean(project)} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className='w-[96vw] gap-0 overflow-hidden sm:max-w-xl lg:w-[34rem] lg:max-w-[34rem]'>
+        {project ? (
+          <>
+            <SheetHeader className='border-b px-5 py-4 pr-12'>
+              <SheetTitle className='text-base'>{project.name}</SheetTitle>
+              <SheetDescription className='sr-only'>
+                {t('description', { contractor: contractor.name })}
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className='min-h-0 flex-1 overflow-y-auto px-5 py-4'>
+              <div className='grid grid-cols-[2fr_1fr] grid-rows-2 gap-1.5'>
+                <div className='bg-muted/50 relative row-span-2 aspect-[4/3] overflow-hidden rounded-lg border'>
+                  <AnimatePresence mode='wait' initial={false}>
+                    {activeImage ? (
+                      <motion.div
+                        key={activeImage}
+                        initial={reduceMotion ? false : { opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: reduceMotion ? 0 : 0.22 }}
+                        className='absolute inset-0'
+                      >
+                        <RevealPhoto
+                          src={activeImage}
+                          alt={t('imageAlt', { project: project.name, index: 1 })}
+                          className='size-full rounded-lg'
+                          sizes='(max-width: 640px) 62vw, 350px'
+                        />
+                      </motion.div>
+                    ) : (
+                      <div className='flex size-full items-center justify-center'>
+                        <ImageIcon className='text-muted-foreground/55 size-6' />
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {[0, 1].map((index) => {
+                  const imageUrl = thumbnails[index]
+                  return imageUrl ? (
+                    <button
+                      key={imageUrl}
+                      type='button'
+                      onClick={() => setActiveGalleryImage(imageUrl)}
+                      className='group aspect-[4/3] overflow-hidden rounded-lg border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
+                      aria-label={t('selectImage', { index: index + 2 })}
+                    >
+                      <RevealPhoto
+                        src={imageUrl}
+                        alt={t('imageAlt', { project: project.name, index: index + 2 })}
+                        className='size-full transition-transform duration-200 group-hover:scale-[1.03]'
+                        sizes='(max-width: 640px) 30vw, 170px'
+                      />
+                    </button>
+                  ) : (
+                    <div
+                      key={`${project.id}-placeholder-${index}`}
+                      className='bg-muted/50 flex aspect-[4/3] items-center justify-center rounded-lg border'
+                    >
+                      <ImageIcon className='text-muted-foreground/55 size-6' />
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className='mt-3 flex flex-wrap gap-2'>
+                <span className='bg-muted rounded-md px-2.5 py-1 text-xs'>{projectType}</span>
+                <span className='bg-muted rounded-md px-2.5 py-1 text-xs'>{constructionScope}</span>
+                {project.verified ? (
+                  <span className='bg-primary/10 text-primary-strong inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium'>
+                    <CircleCheck className='size-3.5' />
+                    {t('verifiedBadge')}
+                  </span>
+                ) : null}
+              </div>
+
+              <motion.section
+                initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: reduceMotion ? 0 : 0.28, delay: reduceMotion ? 0 : 0.08 }}
+                className='mt-5'
+              >
+                <h3 className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>{t('title')}</h3>
+                <dl className='mt-3 grid grid-cols-[8rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-sm'>
+                  <dt className='text-muted-foreground'>{t('projectType')}</dt>
+                  <dd className='font-medium'>{projectType}</dd>
+                  <dt className='text-muted-foreground'>{t('scale')}</dt>
+                  <dd className='font-medium'>{dimensions || t('notUpdated')}</dd>
+                  <dt className='text-muted-foreground'>{t('constructionScope')}</dt>
+                  <dd className='font-medium'>{constructionScope}</dd>
+                  <dt className='text-muted-foreground'>{t('role')}</dt>
+                  <dd className='font-medium'>{contractorRole}</dd>
+                  <dt className='text-muted-foreground'>{t('constructionPeriod')}</dt>
+                  <dd className='font-medium'>{constructionPeriod}</dd>
+                  <dt className='text-muted-foreground'>{t('location')}</dt>
+                  <dd className='font-medium'>{project.location ?? t('notUpdated')}</dd>
+                  <dt className='text-muted-foreground'>{t('mainItems')}</dt>
+                  <dd className='font-medium text-pretty'>{project.mainItems ?? t('mainItemsFallback')}</dd>
+                </dl>
+              </motion.section>
+
+              {project.verified ? (
+                <motion.div
+                  initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.28, delay: reduceMotion ? 0 : 0.13 }}
+                  className='border-primary/25 bg-primary/5 mt-5 flex items-start gap-3 rounded-xl border p-3.5'
+                >
+                  <ShieldCheck className='text-primary mt-0.5 size-5 shrink-0' />
+                  <div>
+                    <p className='text-sm font-semibold'>
+                      {t('verifiedTitle', {
+                        date: project.verifiedAt
+                          ? formatDate(project.verifiedAt, locale, {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })
+                          : t('verifiedDateFallback')
+                      })}
+                    </p>
+                    <p className='text-muted-foreground mt-1 text-xs leading-relaxed'>{t('verifiedBody')}</p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.28, delay: reduceMotion ? 0 : 0.13 }}
+                  className='mt-5 flex items-start gap-2.5 rounded-xl border border-amber-300/60 bg-amber-50 p-3.5 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100'
+                >
+                  <CircleAlert className='mt-0.5 size-4 shrink-0' />
+                  <div>
+                    <p className='text-sm font-semibold'>{t('selfReportedTitle')}</p>
+                    <p className='mt-1 text-xs leading-relaxed'>{t('selfReportedBody')}</p>
+                  </div>
+                </motion.div>
+              )}
+
+              <div className='mt-3 flex items-start gap-2.5 rounded-xl border border-amber-300/60 bg-amber-50 p-3.5 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100'>
+                <CircleAlert className='mt-0.5 size-4 shrink-0' />
+                <p className='text-xs leading-relaxed'>{t('priceNotice')}</p>
+              </div>
+            </div>
+
+            <SheetFooter className='flex-row items-center justify-end border-t bg-background px-5 py-3'>
+              <SheetClose asChild>
+                <Button type='button' variant='outline' size='sm' className='hover:bg-muted/80'>
+                  {t('close')}
+                </Button>
+              </SheetClose>
+              {sheetInviteAction ? (
+                <div className='min-w-36 [&>*]:w-full [&>*]:transition-[filter] [&>*]:hover:brightness-105'>
+                  {sheetInviteAction}
+                </div>
+              ) : null}
+            </SheetFooter>
+          </>
+        ) : null}
+      </SheetContent>
+    </Sheet>
+  )
+}
+
 /** Khối "Năng lực & xác minh" — bốn mục đã được SAVICO đối chiếu. */
-function LegalChecks({ contractor }: { contractor: Contractor }) {
+function LegalChecks({
+  contractor,
+  detailed = false,
+  scanUnlocked = false,
+  inviteAction
+}: {
+  contractor: Contractor
+  detailed?: boolean
+  scanUnlocked?: boolean
+  inviteAction?: React.ReactNode
+}) {
   const t = useTranslations('contractors.firm')
+  const tLegal = useTranslations('contractors.firm.legal')
+  const locale = useLocale() as Locale
+  const reduceMotion = useReducedMotion()
   const [hasEnteredViewport, setHasEnteredViewport] = useState(false)
+  const [licenseOpen, setLicenseOpen] = useState(false)
   const checks = [...contractor.legalChecks]
   const fallbackChecks = [
     t('team', { count: contractor.teamSize }),
@@ -1240,6 +1683,353 @@ function LegalChecks({ contractor }: { contractor: Contractor }) {
   for (const fallback of fallbackChecks) {
     if (checks.length >= 4) break
     if (!checks.includes(fallback)) checks.push(fallback)
+  }
+
+  if (detailed) {
+    const legal = contractor.legalProfile
+    const verified = legal?.registrationStatus !== 'pending'
+    const rows = [
+      { key: 'legalName', label: tLegal('fields.legalName'), value: legal?.legalName ?? contractor.name },
+      {
+        key: 'taxCode',
+        label: tLegal('fields.taxCode'),
+        value: (
+          <span className='inline-flex flex-wrap items-baseline gap-x-2 gap-y-0.5'>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className='decoration-primary/45 cursor-help underline decoration-dotted underline-offset-4'>
+                  {legal?.taxCodeMasked ?? tLegal('updating')}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side='top' sideOffset={7} className='max-w-64'>
+                {tLegal('fields.taxCodeHint')}
+              </TooltipContent>
+            </Tooltip>
+            <span className='text-muted-foreground text-[11px] font-normal'>{tLegal('fields.taxCodeHint')}</span>
+          </span>
+        )
+      },
+      {
+        key: 'establishedAt',
+        label: tLegal('fields.establishedAt'),
+        value: legal
+          ? tLegal('establishedValue', {
+              date: formatDate(legal.establishedAt, locale, { day: '2-digit', month: '2-digit', year: 'numeric' }),
+              years: legal.operationYears
+            })
+          : tLegal('updating')
+      },
+      {
+        key: 'representative',
+        label: tLegal('fields.representative'),
+        value: legal ? `${legal.representative} · ${legal.representativeTitle}` : tLegal('updating')
+      },
+      {
+        key: 'address',
+        label: tLegal('fields.registeredAddress'),
+        value: legal?.registeredAddress ?? contractor.officeAddress
+      },
+      { key: 'business', label: tLegal('fields.primaryBusiness'), value: legal?.primaryBusiness ?? contractor.kind },
+      {
+        key: 'workforce',
+        label: tLegal('fields.capacity'),
+        value: legal?.workforce ?? t('team', { count: contractor.teamSize })
+      }
+    ]
+
+    const commitments = [
+      {
+        key: 'warranty',
+        icon: ShieldCheck,
+        title: tLegal('commitments.warrantyTitle', { months: legal?.warrantyMonths ?? contractor.warrantyMonths }),
+        body: tLegal('commitments.warrantyBody', { months: 12 })
+      },
+      {
+        key: 'contract',
+        icon: FileCheck2,
+        title: tLegal('commitments.contractTitle'),
+        body: legal?.usesSavicoContract === false ? tLegal('commitments.updating') : tLegal('commitments.contractBody')
+      },
+      {
+        key: 'insurance',
+        icon: BadgeCheck,
+        title: tLegal('commitments.insuranceTitle'),
+        body:
+          legal?.hasConstructionInsurance === false
+            ? tLegal('commitments.updating')
+            : tLegal('commitments.insuranceBody')
+      }
+    ]
+
+    return (
+      <div className='space-y-5'>
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.32, ease: revealEase }}
+          className='border-primary/25 bg-primary/5 rounded-2xl border p-4 sm:p-5'
+        >
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
+            <div className='bg-background text-primary flex size-11 shrink-0 items-center justify-center rounded-xl border'>
+              <ShieldCheck className='size-5' />
+            </div>
+            <div className='min-w-0 flex-1'>
+              <h2 className='text-sm font-semibold'>{tLegal('verification.title')}</h2>
+              <p className='text-muted-foreground mt-1 text-xs leading-relaxed'>
+                {tLegal('verification.body', {
+                  date: legal
+                    ? formatDate(legal.verifiedUntil, locale, { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    : tLegal('updating')
+                })}
+              </p>
+            </div>
+            <div className='shrink-0 text-left sm:text-right'>
+              <p className='text-muted-foreground flex items-center gap-1 text-[11px] sm:justify-end'>
+                <span>{tLegal('verification.updated')}</span>
+                <span className='font-medium text-foreground'>
+                  {legal
+                    ? formatDate(legal.verifiedAt, locale, { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    : tLegal('updating')}
+                </span>
+              </p>
+              <span className='bg-primary mt-1.5 block h-[3px] w-32 rounded-full sm:ml-auto' aria-hidden />
+            </div>
+          </div>
+        </motion.section>
+
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.32, delay: reduceMotion ? 0 : 0.1, ease: revealEase }}
+        >
+          <div className='mb-3 flex flex-wrap items-center gap-2'>
+            <h2 className='text-base font-semibold'>{tLegal('identity.title')}</h2>
+            <span className='bg-primary/10 text-primary-strong inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium'>
+              <CircleCheck className='size-3.5' />
+              {verified ? tLegal('identity.active') : tLegal('identity.pending')}
+            </span>
+          </div>
+          <dl className='bg-card grid gap-x-6 gap-y-3 rounded-2xl border p-4 text-sm sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:p-5'>
+            {rows.map((row) => (
+              <div key={row.key} className='contents'>
+                <dt className='text-muted-foreground text-xs sm:py-0.5'>{row.label}</dt>
+                <dd className='font-medium text-pretty'>{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </motion.section>
+
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.32, delay: reduceMotion ? 0 : 0.2, ease: revealEase }}
+        >
+          <div className='mb-3 flex flex-wrap items-center gap-2'>
+            <h2 className='text-base font-semibold'>{tLegal('license.title')}</h2>
+            <span className='bg-primary/10 text-primary-strong inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium'>
+              <CircleCheck className='size-3.5' />
+              {verified ? tLegal('license.verified') : tLegal('identity.pending')}
+            </span>
+          </div>
+          <div className='bg-card hover:bg-primary/[0.035] flex flex-col gap-4 rounded-2xl border p-4 transition-colors duration-200 sm:flex-row sm:items-center'>
+            <div className='bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg'>
+              <FileText className='size-5' />
+            </div>
+            <div className='min-w-0 flex-1'>
+              <h3 className='text-sm font-semibold'>{tLegal('license.documentTitle')}</h3>
+              <p className='text-muted-foreground mt-1 text-xs leading-relaxed'>
+                <span className='block'>{tLegal('license.documentMatch')}</span>
+                <span className='block'>{tLegal('license.issuer')}</span>
+              </p>
+            </div>
+            <dl className='grid shrink-0 grid-cols-2 gap-x-8 text-xs sm:min-w-64'>
+              <div>
+                <dt className='text-muted-foreground'>{tLegal('license.number')}</dt>
+                <dd className='mt-1 font-medium'>{legal?.registrationNumberMasked ?? tLegal('updating')}</dd>
+              </div>
+              <div>
+                <dt className='text-muted-foreground'>{tLegal('license.issuedAt')}</dt>
+                <dd className='mt-1 font-medium whitespace-nowrap'>
+                  {legal
+                    ? tLegal('license.effectiveValue', {
+                        date: formatDate(legal.registrationIssuedAt, locale, {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })
+                      })
+                    : tLegal('updating')}
+                </dd>
+              </div>
+            </dl>
+            <div className='flex items-center gap-2 sm:justify-end'>
+              <span className='bg-primary/10 text-primary-strong inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium'>
+                <CircleCheck className='size-3.5' />
+                {verified ? tLegal('license.verified') : tLegal('identity.pending')}
+              </span>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={() => setLicenseOpen(true)}
+                className='hover:border-primary/40 hover:bg-primary/10 hover:text-primary-strong transition-colors'
+              >
+                <Eye className='size-3.5' />
+                {tLegal('license.view')}
+              </Button>
+            </div>
+          </div>
+          <p className='text-muted-foreground mt-2 flex items-start gap-1.5 text-[11px]'>
+            <Lock className='mt-0.5 size-3 shrink-0' />
+            {tLegal('license.privacy')}
+          </p>
+        </motion.section>
+
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: reduceMotion ? 0 : 0.34, ease: revealEase }}
+        >
+          <h2 className='mb-3 text-base font-semibold'>{tLegal('commitments.title')}</h2>
+          <ul className='grid gap-3 md:grid-cols-3'>
+            {commitments.map((item) => (
+              <motion.li
+                key={item.key}
+                whileHover={reduceMotion ? undefined : { y: -3 }}
+                transition={{ duration: 0.18, ease: revealEase }}
+                className='bg-card flex items-start gap-3 rounded-2xl border p-4 hover:shadow-[0_10px_24px_-20px_rgba(24,80,42,0.55)]'
+              >
+                <item.icon className='text-primary mt-0.5 size-4 shrink-0' />
+                <div>
+                  <h3 className='text-sm font-semibold'>{item.title}</h3>
+                  <p className='text-muted-foreground mt-1 text-xs leading-relaxed'>{item.body}</p>
+                </div>
+              </motion.li>
+            ))}
+          </ul>
+        </motion.section>
+
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: reduceMotion ? 0 : 0.34, ease: revealEase }}
+        >
+          <h2 className='mb-3 text-base font-semibold'>{tLegal('cooperation.title')}</h2>
+          <div className='bg-card flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border p-4 text-xs'>
+            <span className='inline-flex items-center gap-1.5'>
+              <CircleCheck className='text-primary size-3.5' />
+              {tLegal('cooperation.verified')}
+            </span>
+            <span>{tLegal('cooperation.since', { since: contractor.partnership.since })}</span>
+            <span>
+              {tLegal('cooperation.rank', {
+                rank: legal?.cooperationRank ?? 0,
+                percent: legal?.cooperationPercent ?? 0
+              })}
+            </span>
+            <span>{tLegal('cooperation.complaints', { count: legal?.complaintCount ?? 0 })}</span>
+          </div>
+        </motion.section>
+
+        <Dialog open={licenseOpen} onOpenChange={setLicenseOpen}>
+          <DialogContent className='gap-0 overflow-hidden p-0 sm:max-w-lg'>
+            <DialogHeader className='border-b px-5 py-4 pr-12'>
+              <DialogTitle className='text-sm'>{tLegal('license.documentTitle')}</DialogTitle>
+              <DialogDescription className='sr-only'>{tLegal('license.dialogBody')}</DialogDescription>
+            </DialogHeader>
+
+            <div className='bg-muted/35 relative min-h-80 overflow-hidden p-5 sm:min-h-96'>
+              {scanUnlocked ? (
+                <div className='bg-background mx-auto max-w-sm rounded-lg border p-5 shadow-sm'>
+                  <div className='flex items-center gap-3 border-b pb-4'>
+                    <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
+                      <FileCheck2 className='size-5' />
+                    </div>
+                    <div>
+                      <p className='text-sm font-semibold'>{tLegal('license.scanUnlocked')}</p>
+                      <p className='text-primary-strong mt-1 text-xs'>{tLegal('license.verified')}</p>
+                    </div>
+                  </div>
+                  <dl className='mt-4 grid grid-cols-[7rem_minmax(0,1fr)] gap-x-4 gap-y-3 text-xs'>
+                    <dt className='text-muted-foreground'>{tLegal('fields.legalName')}</dt>
+                    <dd className='font-medium'>{legal?.legalName ?? contractor.name}</dd>
+                    <dt className='text-muted-foreground'>{tLegal('license.number')}</dt>
+                    <dd className='font-medium'>{legal?.registrationNumberMasked ?? tLegal('updating')}</dd>
+                    <dt className='text-muted-foreground'>{tLegal('license.issuedAt')}</dt>
+                    <dd className='font-medium'>
+                      {legal
+                        ? formatDate(legal.registrationIssuedAt, locale, {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })
+                        : tLegal('updating')}
+                    </dd>
+                    <dt className='text-muted-foreground'>{tLegal('license.status')}</dt>
+                    <dd className='text-primary-strong font-medium'>{tLegal('license.verified')}</dd>
+                  </dl>
+                </div>
+              ) : (
+                <>
+                  <div className='pointer-events-none absolute inset-5 overflow-hidden rounded-lg border bg-background p-6 opacity-55 blur-[2px]'>
+                    <div className='bg-muted h-5 w-2/3 rounded' />
+                    <div className='mt-5 space-y-3'>
+                      <div className='bg-muted h-3 w-full rounded' />
+                      <div className='bg-muted h-3 w-5/6 rounded' />
+                      <div className='bg-muted h-3 w-11/12 rounded' />
+                    </div>
+                    <div className='mt-7 grid grid-cols-2 gap-5'>
+                      <div className='space-y-3'>
+                        <div className='bg-muted h-3 w-3/4 rounded' />
+                        <div className='bg-muted h-3 w-full rounded' />
+                        <div className='bg-muted h-3 w-4/5 rounded' />
+                      </div>
+                      <div className='space-y-3'>
+                        <div className='bg-muted h-3 w-2/3 rounded' />
+                        <div className='bg-muted h-3 w-full rounded' />
+                        <div className='bg-muted h-3 w-5/6 rounded' />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='absolute inset-0 flex items-center justify-center p-8'>
+                    <motion.div
+                      initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : 0.08 }}
+                      className='bg-background w-full max-w-xs rounded-xl border p-5 text-center shadow-[0_14px_36px_-18px_rgba(20,72,40,0.45)]'
+                    >
+                      <Lock className='text-primary mx-auto size-5' />
+                      <h3 className='mt-3 text-sm font-semibold'>{tLegal('license.lockedTitle')}</h3>
+                      <p className='text-muted-foreground mt-2 text-xs leading-relaxed'>
+                        {tLegal('license.lockedBody', {
+                          date: legal
+                            ? formatDate(legal.verifiedUntil, locale, {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              })
+                            : tLegal('updating')
+                        })}
+                      </p>
+                    </motion.div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <DialogFooter className='border-t bg-background px-5 py-3'>
+              <Button type='button' variant='outline' size='sm' onClick={() => setLicenseOpen(false)}>
+                {tLegal('license.close')}
+              </Button>
+              {!scanUnlocked && inviteAction ? <div className='min-w-32 [&>*]:w-full'>{inviteAction}</div> : null}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    )
   }
 
   return (

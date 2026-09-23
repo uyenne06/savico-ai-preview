@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Coins,
+  ChevronDown,
   ChevronRight,
   ClipboardList,
   Clock,
@@ -15,6 +16,7 @@ import {
   Handshake,
   House,
   Info,
+  Link2,
   Lock,
   Map as MapIcon,
   MapPin,
@@ -26,17 +28,25 @@ import {
   Users,
   X
 } from 'lucide-react'
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+  type Variants
+} from 'motion/react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { Link, useRouter } from '@/i18n/navigation'
+import { useRouter } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { useAuth, useAuthDialogStore } from '@/shared/auth'
 import { useCmsDocument } from '@/shared/cms'
 import { Photo, revealContainerVariants, revealEase, revealItemVariants } from '@/shared/components/common'
 import { Button } from '@/shared/components/ui/button'
-import { CONTRACTOR_PREVIEW_ID, contractorFirmRoute, contractorMatchesRoute, ROUTES } from '@/shared/constants/routes'
+import { CONTRACTOR_PREVIEW_ID, contractorFirmRoute, contractorMatchesRoute } from '@/shared/constants/routes'
 import { useDwellNudge } from '@/shared/hooks'
 import { cn } from '@/shared/lib/utils'
 import { formatNumber } from '@/shared/utils'
@@ -49,10 +59,11 @@ import {
   START_WINDOWS
 } from '../constants/contractors.constants'
 import { CONTRACTORS_SEED } from '../api/contractors.seed'
-import { useBriefs, useCreateBrief } from '../hooks/use-brief'
+import { useBriefs, useCreateBrief, useCreateBriefFromDesign } from '../hooks/use-brief'
 import { filterContractors } from '../services/contractor-list.service'
 import type { Contractor, ContractorSort, SearchRadiusKm } from '../types/contractor.types'
 import { ContractorLogo } from './contractor-logo'
+import { PartnerRegistrationDialog } from './partner-registration-dialog'
 
 /**
  * Bề ngang phần nội dung của S09.
@@ -91,22 +102,42 @@ const SAFETY_CARDS = [{ key: 'privacy' }, { key: 'record' }, { key: 'review' }] 
  * đương 20.6% hộp nội dung.
  */
 function SafetyIcon({ kind }: { kind: (typeof SAFETY_CARDS)[number]['key'] }) {
+  const reduceMotion = useReducedMotion()
   return (
     // Ô vuông có kích thước XÁC ĐỊNH là bắt buộc: icon lucide mang sẵn thuộc
     // tính `height="24"`, nên nếu chỉ đặt `w-[…%]` thì bề ngang co giãn còn
     // chiều cao đứng nguyên 24px và hình bị dẹt. Cho ô bọc `aspect-square` rồi
     // để icon bên trong đo bằng `size-*` (đặt cả hai chiều) thì mới đúng.
-    <span aria-hidden className='relative flex aspect-square w-[20.6%] min-w-12 shrink-0 items-center justify-center'>
+    <motion.span
+      aria-hidden
+      // Mục 5: icon vẽ nét sau khi thẻ đứng yên — `strokeDasharray`/`-offset`
+      // là thuộc tính SVG được KẾ THỪA, đặt trên span cha thì path con nhận
+      // luôn mà không cần biết hình dạng cụ thể (giống kỹ thuật ở "4 cam kết").
+      initial={reduceMotion ? false : { strokeDashoffset: 90 }}
+      whileInView={{ strokeDashoffset: 0 }}
+      viewport={{ once: true, amount: 0.6 }}
+      transition={{ duration: 0.7, delay: 0.4, ease: revealEase }}
+      style={{ strokeDasharray: 90 }}
+      className='relative flex aspect-square w-[20.6%] min-w-12 shrink-0 items-center justify-center'
+    >
       {kind === 'record' ? <FileLock2 className='text-primary size-full' strokeWidth={1.25} /> : null}
 
       {kind === 'review' ? (
         <span className='flex size-full flex-col items-center justify-center gap-1'>
           {/* Cỡ sao để CỐ ĐỊNH chứ không theo %: hàng sao không có chiều cao xác
               định nên `size-[14%]` không phân giải được chiều cao và sao biến
-              mất. */}
+              mất. Mục 6: mỗi sao phóng vào với nảy nhẹ, lần lượt, sau khi thẻ hiện. */}
           <span className='flex gap-0.5'>
             {[0, 1, 2, 3, 4].map((star) => (
-              <Star key={star} className='text-warning size-3 fill-current' />
+              <motion.span
+                key={star}
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.3 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true, amount: 0.6 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 14, delay: 0.5 + star * 0.08 }}
+              >
+                <Star className='text-warning size-3 fill-current' />
+              </motion.span>
             ))}
           </span>
           <Users className='text-primary size-[72%]' strokeWidth={1.25} />
@@ -116,10 +147,15 @@ function SafetyIcon({ kind }: { kind: (typeof SAFETY_CARDS)[number]['key'] }) {
       {kind === 'privacy' ? (
         <>
           <Shield className='text-primary size-full' strokeWidth={1.25} />
-          <Lock className='text-primary absolute size-[32%]' strokeWidth={1.75} />
+          {/* Mục 5 (★ thẻ 1): quai khoá hạ xuống một nhịp khi rê thẻ — gợi cảm
+              giác "đóng" lại. `group` nằm ở thẻ <li> bao ngoài. */}
+          <Lock
+            className='text-primary absolute size-[32%] transition-transform duration-300 group-hover:translate-y-[15%]'
+            strokeWidth={1.75}
+          />
         </>
       ) : null}
-    </span>
+    </motion.span>
   )
 }
 
@@ -128,6 +164,36 @@ const COMPARE_COLUMNS = ['a', 'b', 'c'] as const
 
 /** Năm dòng tiêu chí của bảng "So sánh minh bạch", theo đúng thứ tự trong ảnh. */
 const COMPARE_ROWS = ['duration', 'scope', 'material', 'warranty', 'remark'] as const
+
+/** Dòng nào của bảng so sánh có thể xếp "tốt hơn", và chiều so sánh của dòng đó. */
+const COMPARE_BETTER_DIRECTION: Partial<Record<(typeof COMPARE_ROWS)[number], 'min' | 'max'>> = {
+  duration: 'min',
+  warranty: 'max'
+}
+
+/** Lấy số đứng đầu trong một chuỗi kiểu "120 ngày" / "24 tháng" để so sánh được. */
+function parseLeadingNumber(text: string): number | null {
+  const match = /\d+/.exec(text)
+  return match ? Number(match[0]) : null
+}
+
+/** Biến thể chuyển động cho từng HÀNG của bảng so sánh — tự dàn nhịp cho 3 Ô bên trong. */
+const compareRowVariants = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: revealEase, staggerChildren: 0.09 } }
+} satisfies Variants
+
+/** Biến thể cho từng Ô giá trị (A/B/C) bên trong một hàng — nối tiếp trái sang phải. */
+const compareCellVariants = {
+  hidden: { opacity: 0, x: -10 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.25, ease: revealEase } }
+} satisfies Variants
+
+/** Huy hiệu "Tốt hơn" — phóng vào bằng spring nhẹ, dùng chung cho các hàng so được. */
+const betterBadgeVariants = {
+  hidden: { opacity: 0, scale: 0.4 },
+  show: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 340, damping: 18 } }
+} satisfies Variants
 
 /**
  * Sáu dòng thông số trong thẻ nhà thầu nổi trên bản đồ ở hero (Hình S09).
@@ -286,7 +352,28 @@ const CRITERIA_ITEMS: readonly CriterionItem[] = [
  * - R2/R3: khối "So sánh minh bạch" chỉ đối chiếu NĂNG LỰC, và có một dòng dẫn
  *   nói thẳng báo giá đến từ nhà thầu sau khảo sát, không nằm trên web.
  */
-export function ContractorLanding() {
+
+/**
+ * Dự án thiết kế tối thiểu cần cho nhánh ★ "đã có gói" của khối "Ranh giới
+ * dịch vụ" — kiểu cấu trúc CỤC BỘ (không import type từ `features/design`,
+ * boundary cấm import chéo feature); `app/` truyền vào một `Project` thật,
+ * khớp cấu trúc này là đủ.
+ */
+interface DesignHandoffProject {
+  id: string
+  name: string
+  // Trùng đúng 5 khoá của `design.input.buildingType.options` — union CỤC BỘ,
+  // không phải import `BuildingType` từ `features/design`.
+  buildingType?: 'townhouse' | 'villa' | 'roofed' | 'garden' | 'apartment' | null
+  floorArea?: number | null
+}
+
+interface ContractorLandingProps {
+  /** "Đã có gói thiết kế + hồ sơ sẵn sàng" — ghép ở `app/` (xem `useDesignHandoff`). */
+  designHandoff?: { ready: boolean; project: DesignHandoffProject | null }
+}
+
+export function ContractorLanding({ designHandoff }: ContractorLandingProps = {}) {
   const t = useTranslations('contractors.landing')
   const tRankTabs = useTranslations('contractors.landing.ranking.tabs')
   const tCommon = useTranslations('contractors.common')
@@ -416,6 +503,80 @@ export function ContractorLanding() {
     if (featuredHoverTimer.current) window.clearTimeout(featuredHoverTimer.current)
     featuredHoverTimer.current = window.setTimeout(() => setFeaturedContractorId(CONTRACTORS_SEED[0]?.id ?? ''), 120)
   }
+
+  /** Khối "Ranh giới dịch vụ" — nhánh ★ khi khách đã có gói thiết kế + hồ sơ sẵn sàng. */
+  const designProject = designHandoff?.project ?? null
+  const designReady = designHandoff?.ready ?? false
+  const tDesignBuildingType = useTranslations('design.input.buildingType.options')
+  const createBriefFromDesign = useCreateBriefFromDesign()
+  const startBriefFromDesign = () => {
+    if (!designProject) return
+    createBriefFromDesign.mutate({
+      designProjectId: designProject.id,
+      name: designProject.name,
+      buildingType: designProject.buildingType ? tDesignBuildingType(designProject.buildingType) : '',
+      landArea: designProject.floorArea ?? 0
+    })
+  }
+
+  /** Bảng "So sánh minh bạch" — rê hàng/cột (mục 1), huy hiệu "Tốt hơn" chỉ bật
+   *  sau khi bảng hiện xong (mục 2), dải "Xem chi tiết" mở theo cột (mục 3). */
+  const [compareHoverRow, setCompareHoverRow] = useState<(typeof COMPARE_ROWS)[number] | null>(null)
+  const [compareHoverCol, setCompareHoverCol] = useState<(typeof COMPARE_COLUMNS)[number] | null>(null)
+  const [compareBadgesReady, setCompareBadgesReady] = useState(reduceMotion ?? false)
+  const [scopeOpenCol, setScopeOpenCol] = useState<(typeof COMPARE_COLUMNS)[number] | null>(null)
+  const revealCompareBadges = () => {
+    if (compareBadgesReady) return
+    window.setTimeout(() => setCompareBadgesReady(true), reduceMotion ? 0 : 820)
+  }
+
+  const tCompareRows = useTranslations('contractors.landing.compare.rows')
+  const compareBetterCol = useMemo(() => {
+    const result: Partial<Record<(typeof COMPARE_ROWS)[number], (typeof COMPARE_COLUMNS)[number]>> = {}
+    for (const row of COMPARE_ROWS) {
+      const direction = COMPARE_BETTER_DIRECTION[row]
+      if (!direction) continue
+      const values = COMPARE_COLUMNS.map((col) => parseLeadingNumber(tCompareRows(`${row}.${col}`)))
+      if (values.some((value) => value === null)) continue
+      const nums = values as number[]
+      const best = direction === 'min' ? Math.min(...nums) : Math.max(...nums)
+      const winners = COMPARE_COLUMNS.filter((_, index) => nums[index] === best)
+      if (winners.length === 1) result[row] = winners[0]
+    }
+    return result
+  }, [tCompareRows])
+
+  /** FAQ (mục 10): sao chép liên kết #faq-N + loé dòng khi mở trang bằng liên kết đó. */
+  const [faqCopiedIndex, setFaqCopiedIndex] = useState<number | null>(null)
+  const [faqFlashIndex, setFaqFlashIndex] = useState<number | null>(null)
+  const [partnerDialogOpen, setPartnerDialogOpen] = useState(false)
+  const flashFaqRow = (index: number) => {
+    setFaqFlashIndex(index)
+    window.setTimeout(() => setFaqFlashIndex((current) => (current === index ? null : current)), 900)
+  }
+  const copyFaqLink = async (index: number) => {
+    try {
+      const url = `${window.location.origin}${window.location.pathname}#faq-${index}`
+      await navigator.clipboard.writeText(url)
+    } catch {
+      return
+    }
+    setFaqCopiedIndex(index)
+    window.setTimeout(() => setFaqCopiedIndex((current) => (current === index ? null : current)), 1800)
+    flashFaqRow(index)
+  }
+  useEffect(() => {
+    const match = /^#faq-(\d)$/.exec(window.location.hash)
+    if (!match) return
+    const index = Number(match[1])
+    const row = document.getElementById(`faq-${index}`)
+    if (!row) return
+    window.setTimeout(() => {
+      row.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' })
+      flashFaqRow(index)
+    }, 300)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chạy một lần khi trang tải với #faq-N trên URL.
+  }, [])
 
   // Nhịp dọc đo trên Hình S09: các khoảng hở giữa hai khối liền nhau chỉ 12–14px
   // trên ảnh 450px = 41–48px ở khổ thật, còn `space-y-16` (64px) của bản trước
@@ -989,21 +1150,48 @@ export function ContractorLanding() {
           Bỏ dòng dẫn "Bảng so sánh trên nền tảng chỉ đối chiếu NĂNG LỰC…" vì
           ảnh không có; nội dung R2/R3 vẫn còn ở FAQ và ở khối "Ranh giới dịch
           vụ" bên dưới. */}
-      <section className={PAGE_CONTAINER}>
+      <motion.section
+        className={PAGE_CONTAINER}
+        initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.5, ease: revealEase }}
+      >
         {/* Ảnh: mọi tiêu đề section đều IN HOA, màu xanh, canh giữa. */}
         <h2 className='text-primary-strong text-center text-lg font-bold tracking-wide uppercase'>
           {t('compare.title')}
         </h2>
 
-        <div className='bg-card mt-5 overflow-x-auto rounded-2xl border'>
+        {/* Mục 4: mobile chỉ vuốt ngang được, gợi ý người dùng biết còn 2 cột nữa. */}
+        <p className='text-muted-foreground mt-3 text-center text-xs md:hidden'>{t('compare.swipeHint')}</p>
+
+        <motion.div
+          className='bg-card mt-5 overflow-x-auto rounded-2xl border'
+          variants={revealContainerVariants}
+          initial={reduceMotion ? false : 'hidden'}
+          whileInView='show'
+          viewport={{ once: true, amount: 0.3 }}
+          onViewportEnter={revealCompareBadges}
+        >
           <table className='w-full min-w-[640px] border-collapse text-sm'>
             <thead>
               <tr>
-                <th className='border-b p-4 text-left font-medium'>{t('compare.criterion')}</th>
+                {/* Mục 4: cột "Tiêu chí" đứng yên khi vuốt ngang trên mobile. */}
+                <th className='bg-card border-b p-4 text-left font-medium max-md:sticky max-md:left-0'>
+                  {t('compare.criterion')}
+                </th>
                 {COMPARE_COLUMNS.map((col) => (
                   // Ảnh: tên ba cột nhà thầu màu xanh thương hiệu, chỉ ô
                   // "Tiêu chí" là chữ thường.
-                  <th key={col} className='text-primary-strong border-b border-l p-4 text-center font-medium'>
+                  <th
+                    key={col}
+                    onMouseEnter={() => setCompareHoverCol(col)}
+                    onMouseLeave={() => setCompareHoverCol((current) => (current === col ? null : current))}
+                    className={cn(
+                      'text-primary-strong border-b border-l p-4 text-center font-medium transition-colors',
+                      compareHoverCol === col && 'bg-primary/10'
+                    )}
+                  >
                     {t(`compare.columns.${col}`)}
                   </th>
                 ))}
@@ -1011,28 +1199,150 @@ export function ContractorLanding() {
             </thead>
             <tbody>
               {COMPARE_ROWS.map((row) => (
-                <tr key={row}>
-                  <th className='text-muted-foreground border-b p-4 text-left font-normal'>
+                <motion.tr
+                  key={row}
+                  variants={compareRowVariants}
+                  onMouseEnter={() => setCompareHoverRow(row)}
+                  onMouseLeave={() => setCompareHoverRow((current) => (current === row ? null : current))}
+                  className={cn(
+                    'transition-colors',
+                    compareHoverRow === row && compareHoverCol === null && 'bg-muted/50'
+                  )}
+                >
+                  <th
+                    className={cn(
+                      'bg-card text-muted-foreground border-b p-4 text-left font-normal transition-colors max-md:sticky max-md:left-0',
+                      compareHoverRow === row && compareHoverCol === null && 'bg-muted/50'
+                    )}
+                  >
                     {t(`compare.rows.${row}.label`)}
                   </th>
-                  {COMPARE_COLUMNS.map((col) => (
-                    <td key={col} className='border-b border-l p-4 text-center'>
-                      {t(`compare.rows.${row}.${col}`)}
-                    </td>
-                  ))}
-                </tr>
+                  {COMPARE_COLUMNS.map((col) => {
+                    const isBetter = compareBetterCol[row] === col
+                    const isScopeRow = row === 'scope'
+                    const isScopeOpen = isScopeRow && scopeOpenCol === col
+                    return (
+                      <motion.td
+                        key={col}
+                        variants={compareCellVariants}
+                        onMouseEnter={() => setCompareHoverCol(col)}
+                        onMouseLeave={() => setCompareHoverCol((current) => (current === col ? null : current))}
+                        className={cn(
+                          'relative border-b border-l p-4 text-center transition-colors',
+                          compareHoverCol === col ? 'bg-primary/10' : compareHoverRow === row && 'bg-muted/50',
+                          isBetter && 'bg-primary/10'
+                        )}
+                      >
+                        {isScopeRow ? (
+                          // Mục 3: "Xem chi tiết" gạch chân vẽ từ trái khi rê, mũi tên
+                          // xoay khi dải chi tiết đang mở cho đúng nhà thầu này.
+                          <button
+                            type='button'
+                            onClick={() => setScopeOpenCol((current) => (current === col ? null : col))}
+                            className='group/link text-foreground inline-flex items-center gap-1 font-medium'
+                            aria-expanded={isScopeOpen}
+                          >
+                            <span className='relative'>
+                              {t(`compare.rows.${row}.${col}`)}
+                              <span className='bg-foreground absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 transition-transform duration-300 group-hover/link:scale-x-100' />
+                            </span>
+                            <ChevronDown
+                              className={cn('size-3.5 transition-transform duration-300', isScopeOpen && 'rotate-180')}
+                            />
+                          </button>
+                        ) : (
+                          t(`compare.rows.${row}.${col}`)
+                        )}
+
+                        {/* Mục 2: huy hiệu "Tốt hơn" chỉ phóng vào sau khi bảng hiện xong. */}
+                        {isBetter ? (
+                          <motion.span
+                            variants={betterBadgeVariants}
+                            initial='hidden'
+                            animate={compareBadgesReady ? 'show' : 'hidden'}
+                            transition={{ delay: COMPARE_ROWS.indexOf(row) * 0.12 }}
+                            className='bg-primary text-primary-foreground mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold'
+                          >
+                            {t('compare.betterBadge')}
+                          </motion.span>
+                        ) : null}
+                      </motion.td>
+                    )
+                  })}
+                </motion.tr>
               ))}
+
+              {/* Mục 3: dải "Xem chi tiết" mở ngay dưới hàng "Phạm vi bao gồm/không bao gồm". */}
+              <AnimatePresence initial={false}>
+                {scopeOpenCol ? (
+                  <motion.tr
+                    initial={reduceMotion ? false : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <td colSpan={COMPARE_COLUMNS.length + 1} className='border-b p-0'>
+                      <motion.div
+                        initial={reduceMotion ? false : { height: 0 }}
+                        animate={{ height: 'auto' }}
+                        exit={{ height: 0 }}
+                        transition={{ duration: 0.3, ease: revealEase }}
+                        className='overflow-hidden'
+                      >
+                        <motion.div
+                          variants={revealContainerVariants}
+                          initial={reduceMotion ? false : 'hidden'}
+                          animate='show'
+                          className='bg-muted/30 grid gap-3 p-4 sm:grid-cols-3'
+                        >
+                          {COMPARE_COLUMNS.map((col) => (
+                            <motion.div
+                              key={col}
+                              variants={revealItemVariants}
+                              className={cn(
+                                'bg-card rounded-xl border p-3 text-left text-xs',
+                                col === scopeOpenCol && 'border-primary border-2'
+                              )}
+                            >
+                              <p className='text-primary-strong mb-1.5 font-semibold'>{t(`compare.columns.${col}`)}</p>
+                              <p className='text-muted-foreground'>{t('compare.scopeDetail.includedLabel')}</p>
+                              <ul className='mb-2 space-y-0.5'>
+                                {(t.raw(`compare.scopeDetail.${col}.included`) as string[]).map((item) => (
+                                  <li key={item}>{item}</li>
+                                ))}
+                              </ul>
+                              <p className='text-muted-foreground'>{t('compare.scopeDetail.excludedLabel')}</p>
+                              <ul className='text-muted-foreground space-y-0.5'>
+                                {(t.raw(`compare.scopeDetail.${col}.excluded`) as string[]).map((item) => (
+                                  <li key={item} className='line-through'>
+                                    {item}
+                                  </li>
+                                ))}
+                              </ul>
+                            </motion.div>
+                          ))}
+                        </motion.div>
+                      </motion.div>
+                    </td>
+                  </motion.tr>
+                ) : null}
+              </AnimatePresence>
             </tbody>
           </table>
 
           {/* Ảnh: dòng nguồn dữ liệu nằm TRONG khung bảng, canh giữa, có dấu
-              tick tròn màu xanh đứng trước. */}
-          <p className='text-muted-foreground flex items-center justify-center gap-2 p-4 text-xs text-pretty'>
+              tick tròn màu xanh đứng trước. Mục 4: hiện dần sau bảng. */}
+          <motion.p
+            initial={reduceMotion ? false : { opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className='text-muted-foreground flex items-center justify-center gap-2 p-4 text-xs text-pretty'
+          >
             <CheckCircle2 className='text-primary size-4 shrink-0' />
             {t('compare.note')}
-          </p>
-        </div>
-      </section>
+          </motion.p>
+        </motion.div>
+      </motion.section>
 
       {/* An toàn & minh bạch — Hình S09.
 
@@ -1049,11 +1359,20 @@ export function ContractorLanding() {
             `gap-4` = 1.1% nên ba thẻ dính nhau hơn ảnh).
             Trong thẻ: lề 10px (7.4%) · icon 33px (24.4%) · khe icon→chữ 12px
             (8.9%) · cột chữ 72px (53.3%). Icon canh GIỮA chiều cao thẻ. */}
-        <ul className='mt-5 grid gap-[2.36%] gap-y-4 md:grid-cols-3'>
+        <motion.ul
+          variants={revealContainerVariants}
+          initial={reduceMotion ? false : 'hidden'}
+          whileInView='show'
+          viewport={{ once: true, amount: 0.3 }}
+          className='mt-5 grid gap-[2.36%] gap-y-4 md:grid-cols-3'
+        >
           {SAFETY_CARDS.map((item) => (
-            <li
+            <motion.li
               key={item.key}
-              className='bg-card flex items-center gap-[8.9%] rounded-2xl border p-[7.4%] sm:p-5 md:p-[7.4%]'
+              variants={revealItemVariants}
+              // Mục 5: rê thẻ → nhấc lên + bóng rộng + viền xanh nhạt (viền/bóng
+              // này CHƯA từng có ở trạng thái nghỉ, chỉ thêm cho hover).
+              className='group bg-card flex items-center gap-[8.9%] rounded-2xl border p-[7.4%] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg sm:p-5 md:p-[7.4%]'
             >
               <SafetyIcon kind={item.key} />
               <div className='min-w-0 flex-1'>
@@ -1066,9 +1385,9 @@ export function ContractorLanding() {
                   {t(`safety.${item.key}Body`)}
                 </p>
               </div>
-            </li>
+            </motion.li>
           ))}
-        </ul>
+        </motion.ul>
       </section>
 
       {/* Ranh giới dịch vụ — Hình S09, dải y=620…660 (cao 41px = 9.7% bề ngang
@@ -1092,34 +1411,85 @@ export function ContractorLanding() {
               đó là thứ bóp cột chữ còn 43% bề ngang khối và làm dòng mô tả gãy
               HAI dòng như ảnh; bản trước để `p-[4%]` đều bốn phía nên cột chữ
               rộng 67% và mô tả nằm gọn một dòng. */}
-          <div className='bg-accent/45 after:bg-accent/45 relative flex items-center gap-[12.6%] rounded-2xl py-[3%] pr-[11.4%] pl-[17%] after:absolute after:top-0 after:-right-8 after:h-full after:w-8 after:[clip-path:polygon(0_0,100%_50%,0_100%)] max-md:after:hidden'>
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, x: -32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.55, ease: revealEase }}
+            className='group bg-accent/45 after:bg-accent/45 relative flex items-center gap-[12.6%] rounded-2xl py-[3%] pr-[11.4%] pl-[17%] after:absolute after:top-0 after:-right-8 after:h-full after:w-8 after:[clip-path:polygon(0_0,100%_50%,0_100%)] max-md:after:hidden'
+          >
             {/* Ô bọc vuông vì icon lucide mang sẵn `height="24"` — chỉ đặt
                 `w-…%` thì hình bị dẹt (xem ghi chú ở `SafetyIcon`).
                 Ảnh vẽ một KHUNG VUÔNG BO GÓC lồng bản vẽ, có cây bút chì vắt
                 chéo góc dưới phải → `SquarePen`, không phải hai cây bút bắt
                 chéo như `PencilRuler` của bản trước. */}
-            <span aria-hidden className='flex aspect-square w-[25.1%] min-w-12 shrink-0 items-center justify-center'>
+            <span
+              aria-hidden
+              className='flex aspect-square w-[25.1%] min-w-12 shrink-0 items-center justify-center transition-transform duration-300 group-hover:-translate-y-1'
+            >
               <SquarePen className='text-primary size-full' strokeWidth={1.25} />
             </span>
             <div className='min-w-0 flex-1'>
               <h3 className='text-primary-strong font-bold tracking-wide uppercase'>{t('boundary.designTitle')}</h3>
               <p className='text-muted-foreground mt-1 text-sm text-pretty'>{t('boundary.designBody')}</p>
+              {/* Mục 7 (★): đã có gói + hồ sơ sẵn sàng — nhãn phóng vào sau khi khối đứng yên. */}
+              {designReady ? (
+                <motion.p
+                  initial={reduceMotion ? false : { opacity: 0, scale: 0.7 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true, amount: 0.4 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 20, delay: 0.5 }}
+                  className='text-primary-strong mt-2 text-xs font-semibold'
+                >
+                  {t('boundary.designReadyBadge')}
+                </motion.p>
+              ) : null}
             </div>
-          </div>
+          </motion.div>
 
-          {/* Hình S09: giữa hai khối là ba chấm · dòng chữ NGẮT HAI DÒNG · mũi tên. */}
-          <div className='flex items-center justify-center gap-3 px-4 py-4'>
-            <span aria-hidden className='text-primary/50 text-lg leading-none'>
+          {/* Hình S09: giữa hai khối là ba chấm · dòng chữ NGẮT HAI DÒNG · mũi tên.
+              Mục 8: sau khi hai khối đứng yên, ba chấm rồi chữ hiện dần, mũi tên
+              bật vào sau cùng với nảy nhẹ. */}
+          <motion.div
+            variants={revealContainerVariants}
+            initial={reduceMotion ? false : 'hidden'}
+            whileInView='show'
+            viewport={{ once: true, amount: 0.6 }}
+            transition={{ delayChildren: 0.5 }}
+            className='relative flex items-center justify-center gap-3 px-4 py-4'
+          >
+            {/* Mục 8 (★): đã có gói — một chấm cam chạy dọc đường nối về phía
+                "Tìm nhà thầu" đúng 3 lượt rồi dừng hẳn (không lặp vô hạn). */}
+            {designReady && !reduceMotion ? (
+              <motion.span
+                aria-hidden
+                initial={{ left: '6%', opacity: 0 }}
+                animate={{ left: ['6%', '94%'], opacity: [0, 1, 1, 0] }}
+                transition={{ duration: 1.1, ease: 'easeInOut', repeat: 2, repeatDelay: 0.3, delay: 1.1 }}
+                className='bg-brand-orange absolute top-1/2 size-1.5 -translate-y-1/2 rounded-full'
+              />
+            ) : null}
+            <motion.span variants={revealItemVariants} aria-hidden className='text-primary/50 text-lg leading-none'>
               ···
-            </span>
+            </motion.span>
             {/* Hình S09: dòng chữ và mũi tên ở giữa là màu XANH THƯƠNG HIỆU,
                 không phải chữ đen — đo trên ảnh ra (66,95,80), tức cùng tông với
                 tiêu đề khối chứ không phải `--foreground` (13,14,17). */}
-            <p className='text-primary-strong text-center text-sm font-semibold whitespace-pre-line'>
+            <motion.p
+              variants={revealItemVariants}
+              className='text-primary-strong text-center text-sm font-semibold whitespace-pre-line'
+            >
               {t('boundary.arrow')}
-            </p>
-            <ArrowRight aria-hidden className='text-primary-strong size-5 shrink-0' />
-          </div>
+            </motion.p>
+            <motion.span
+              variants={{
+                hidden: { opacity: 0, scale: 0.3 },
+                show: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 360, damping: 16 } }
+              }}
+            >
+              <ArrowRight aria-hidden className='text-primary-strong size-5 shrink-0' />
+            </motion.span>
+          </motion.div>
 
           {/* Khối xanh bên trái nhô ra một mũi nhọn, nên mép trái khối này
               phải LÕM VÀO đúng bằng chừng đó thì hai hình mới ăn khớp (Hình
@@ -1129,18 +1499,43 @@ export function ContractorLanding() {
               `clip-path` lên cả khối: `clip-path` sẽ cắt mất bo góc, còn cách
               này giữ nguyên `rounded-2xl` — `overflow-hidden` lo phần tam giác
               thò ra ngoài góc bo. */}
-          <div className='bg-brand-orange-soft/70 before:bg-background relative flex items-center gap-[12.6%] overflow-hidden rounded-2xl py-[3%] pr-[11.4%] pl-[17%] before:absolute before:top-0 before:left-0 before:h-full before:w-8 before:[clip-path:polygon(0_0,100%_50%,0_100%)] max-md:before:hidden'>
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, x: 32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.55, ease: revealEase }}
+            className='group bg-brand-orange-soft/70 before:bg-background relative flex items-center gap-[12.6%] overflow-hidden rounded-2xl py-[3%] pr-[11.4%] pl-[17%] before:absolute before:top-0 before:left-0 before:h-full before:w-8 before:[clip-path:polygon(0_0,100%_50%,0_100%)] max-md:before:hidden'
+          >
             {/* Ảnh vẽ nửa người thợ (đầu + hai vai). Không ghép thêm mũ bảo hộ:
                 chồng `HardHat` lên `User` cho ra một hình rối, và người mới là
                 phần mang nghĩa "tìm NGƯỜI thực hiện". */}
-            <span aria-hidden className='flex aspect-square w-[25.1%] min-w-12 shrink-0 items-center justify-center'>
+            <span
+              aria-hidden
+              className='flex aspect-square w-[25.1%] min-w-12 shrink-0 items-center justify-center transition-transform duration-300 group-hover:-translate-y-1'
+            >
               <User className='text-brand-orange size-full' strokeWidth={1.25} />
             </span>
             <div className='min-w-0 flex-1'>
               <h3 className='text-brand-orange font-bold tracking-wide uppercase'>{t('boundary.findTitle')}</h3>
               <p className='text-muted-foreground mt-1 text-sm text-pretty'>{t('boundary.findBody')}</p>
+              {/* Mục 9 (★): đã có gói — bỏ qua Bước 1, mở thẳng Kiểm tra hồ sơ (M03). */}
+              {designReady ? (
+                <motion.button
+                  type='button'
+                  onClick={startBriefFromDesign}
+                  disabled={createBriefFromDesign.isPending}
+                  initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.4 }}
+                  transition={{ duration: 0.4, delay: 0.55 }}
+                  className='text-brand-orange mt-2 inline-flex items-center gap-1 text-xs font-semibold underline-offset-2 hover:underline disabled:opacity-60'
+                >
+                  {t('boundary.createFromPlan')}
+                  <ArrowRight className='size-3.5' />
+                </motion.button>
+              ) : null}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -1161,17 +1556,49 @@ export function ContractorLanding() {
           thắng ảnh ở chỗ này. */}
       <section className={PAGE_CONTAINER}>
         <h2 className='text-primary-strong text-center text-lg font-bold tracking-wide uppercase'>{t('faq.title')}</h2>
-        <dl className='bg-card mt-5 rounded-2xl border px-[3%]'>
+        <motion.dl
+          variants={revealContainerVariants}
+          initial={reduceMotion ? false : 'hidden'}
+          whileInView='show'
+          viewport={{ once: true, amount: 0.2 }}
+          className='bg-card mt-5 rounded-2xl border px-[3%]'
+        >
           {([1, 2, 3, 4, 5] as const).map((index) => (
-            <div
+            <motion.div
               key={index}
-              className='grid items-baseline gap-x-4 gap-y-1 border-b py-4 last:border-b-0 md:grid-cols-[33.5%_minmax(0,1fr)]'
+              id={`faq-${index}`}
+              variants={revealItemVariants}
+              className={cn(
+                'group/faq relative grid scroll-mt-24 items-baseline gap-x-4 gap-y-1 border-b py-4 px-3 -mx-3 transition-colors duration-500 last:border-b-0 md:grid-cols-[33.5%_minmax(0,1fr)]',
+                faqFlashIndex === index ? 'bg-primary/15' : 'hover:bg-accent/30'
+              )}
             >
-              <dt className='font-semibold'>{t(`faq.q${index}`)}</dt>
-              <dd className='text-muted-foreground text-sm text-pretty'>{t(`faq.a${index}`)}</dd>
-            </div>
+              {/* Mục 10: vạch xanh bên trái vẽ từ trên xuống khi rê dòng. */}
+              <span className='bg-primary absolute inset-y-0 left-0 w-0.5 origin-top scale-y-0 transition-transform duration-300 group-hover/faq:scale-y-100' />
+              <dt className='group-hover/faq:text-primary-strong font-semibold transition-colors'>
+                {t(`faq.q${index}`)}
+              </dt>
+              <dd className='text-muted-foreground text-sm text-pretty'>
+                {t.rich(`faq.a${index}`, {
+                  // Mục 10: từ khoá "3 nhà thầu" nền xanh nhạt, đứng yên (không animate).
+                  mark: (chunks) => <mark className='bg-accent/60 text-foreground rounded px-1'>{chunks}</mark>
+                })}
+              </dd>
+              <button
+                type='button'
+                onClick={() => void copyFaqLink(index)}
+                aria-label={t('faq.copyLink')}
+                className='text-muted-foreground hover:text-primary-strong absolute top-3 right-3 opacity-0 transition-opacity group-hover/faq:opacity-100'
+              >
+                {faqCopiedIndex === index ? (
+                  <span className='text-primary-strong text-xs font-medium'>{t('faq.linkCopied')}</span>
+                ) : (
+                  <Link2 className='size-4' />
+                )}
+              </button>
+            </motion.div>
           ))}
-        </dl>
+        </motion.dl>
       </section>
 
       {/* CTA + dải đối tác — Hình S09, hai dải cuối trang.
@@ -1184,28 +1611,68 @@ export function ContractorLanding() {
           Dải đối tác: nền be/cam nhạt (247,241,229) chứ không phải nền trắng
           viền nét đứt; icon bắt tay và link "Trở thành đối tác" đều màu cam. */}
       <section className={cn(PAGE_CONTAINER, 'space-y-3')}>
-        <div className='bg-primary-strong text-primary-foreground flex flex-wrap items-center justify-between gap-4 rounded-2xl px-7 py-6'>
-          <p className='font-semibold text-pretty'>{t('cta.title')}</p>
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.5, ease: revealEase }}
+          className='bg-primary-strong text-primary-foreground relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl px-7 py-6'
+        >
+          {/* Mục 11: quầng sáng xanh non hiện chậm ở góc phải — thuần trang trí,
+              không đụng tới bố cục hay màu nền hiện có. */}
+          <motion.span
+            aria-hidden
+            initial={reduceMotion ? false : { opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 1.4, delay: 0.2, ease: revealEase }}
+            className='bg-primary/40 pointer-events-none absolute -top-10 -right-10 size-40 rounded-full blur-3xl'
+          />
+          <p className='relative font-semibold text-pretty'>{t('cta.title')}</p>
           <Button
-            className='bg-background text-primary-strong hover:bg-background/90 border-0 bg-none shadow-sm'
+            className='bg-background text-primary-strong hover:bg-background/90 relative border-0 bg-none shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md'
             onClick={startBrief}
             disabled={createBrief.isPending}
           >
-            {t('cta.action')}
+            <span className='relative overflow-hidden'>
+              {/* Mục 11: một vệt sáng lướt qua nút đúng một lần khi dải vào tầm nhìn. */}
+              <motion.span
+                aria-hidden
+                initial={reduceMotion ? false : { x: '-150%' }}
+                whileInView={{ x: '150%' }}
+                viewport={{ once: true, amount: 0.5 }}
+                transition={{ duration: 0.9, delay: 0.5, ease: 'easeInOut' }}
+                className='absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-white/40'
+              />
+              <span className='relative'>{t('cta.action')}</span>
+            </span>
           </Button>
-        </div>
+        </motion.div>
 
-        <div className='bg-brand-orange-soft/70 text-muted-foreground flex flex-wrap items-center justify-between gap-3 rounded-2xl px-7 py-4 text-sm'>
+        {/* Mục 12: hiện dần sau dải CTA. */}
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.5, delay: 0.2, ease: revealEase }}
+          className='group bg-brand-orange-soft/70 text-muted-foreground flex flex-wrap items-center justify-between gap-3 rounded-2xl px-7 py-4 text-sm transition-colors duration-300 hover:bg-brand-orange-soft'
+        >
           <span className='inline-flex items-center gap-2'>
             <Handshake className='text-brand-orange size-4' />
             {t('partner.text')}
           </span>
-          <Link href={ROUTES.CONSULT} className='text-brand-orange inline-flex items-center gap-1.5 font-semibold'>
+          <button
+            type='button'
+            onClick={() => setPartnerDialogOpen(true)}
+            className='text-brand-orange inline-flex items-center gap-1.5 font-semibold'
+          >
             {t('partner.action')}
-            <ArrowRight className='size-3.5' />
-          </Link>
-        </div>
+            <ArrowRight className='size-3.5 transition-transform duration-300 group-hover:translate-x-1' />
+          </button>
+        </motion.div>
       </section>
+
+      <PartnerRegistrationDialog open={partnerDialogOpen} onOpenChange={setPartnerDialogOpen} />
 
       {/* Hình S09 kết thúc ngay sau dải đối tác — mực in cuối cùng ở y=797 trên
           ảnh cao 800px. Dòng nhắc "SAVICO không hiển thị báo giá…" là của bản

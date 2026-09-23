@@ -12,6 +12,7 @@ export function emptyBrief(): Omit<ProjectBrief, 'id' | 'createdAt' | 'updatedAt
     landArea: 0,
     siteCondition: 'empty',
     scale: 'ground+1',
+    hasAttic: null,
     address: { provinceCode: null, provinceName: '', wardCode: null, wardName: '', street: '' },
     budget: 0,
     startWindow: 'in-1-3-months',

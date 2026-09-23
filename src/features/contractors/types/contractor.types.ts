@@ -18,7 +18,7 @@ export type ConstructionScope = 'turnkey' | 'shell' | 'finishing' | 'interior'
 export type SiteCondition = 'empty' | 'demolish' | 'renovate'
 
 /** Quy mô công trình — hàng chọn ở Bước 1 (S10). */
-export type ProjectScale = 'ground' | 'ground+1' | 'ground+2' | 'ground+3'
+export type ProjectScale = 'ground' | 'ground+1' | 'ground+2' | 'ground+3' | 'ground+4'
 
 /** Mốc khởi công dự kiến (S10). */
 export type StartWindow = 'asap' | 'in-1-3-months' | 'in-3-6-months' | 'undecided'
@@ -111,6 +111,8 @@ export interface ProjectBrief {
   landArea: number
   siteCondition: SiteCondition
   scale: ProjectScale
+  /** Tum chỉ áp dụng cho các loại nhà; căn hộ khóa một mặt sàn và không tum. */
+  hasAttic?: boolean | null
   address: BriefAddress
   /** Ngân sách dự kiến (VND) của chủ nhà — KHÔNG gửi cho nhà thầu (S18). */
   budget: number
@@ -155,6 +157,21 @@ export interface ContractorProject {
   name: string
   year: number
   imageUrl?: string
+  /** Dữ liệu tóm tắt trên thẻ ở tab "Dự án đã thực hiện" (Hình S13 mở rộng). */
+  verified?: boolean
+  category?: 'house' | 'villa' | 'renovation' | 'factory'
+  areaM2?: number
+  dimensions?: string
+  scale?: string
+  location?: string
+  constructionScope?: 'turnkey' | 'structural' | 'finishing'
+  contractorRole?: 'general-contractor' | 'contractor'
+  constructionMonths?: number
+  constructionStartedAt?: string
+  constructionEndedAt?: string
+  mainItems?: string
+  verifiedAt?: string
+  galleryUrls?: string[]
   /** Thế mạnh liên quan, dùng để lọc dự án khi bấm tag ở M06. */
   tags?: string[]
 }
@@ -173,6 +190,30 @@ export interface ContractorPartnership {
   signedAt: string
   pageCount: number
   scanUrl?: string
+}
+
+/** Hồ sơ pháp lý đã được SAVICO đối chiếu trong tab "Năng lực pháp lý". */
+export interface ContractorLegalProfile {
+  legalName: string
+  taxCodeMasked: string
+  establishedAt: string
+  operationYears: number
+  representative: string
+  representativeTitle: string
+  registeredAddress: string
+  primaryBusiness: string
+  workforce: string
+  registrationNumberMasked: string
+  registrationIssuedAt: string
+  registrationStatus: 'verified' | 'pending'
+  verifiedAt: string
+  verifiedUntil: string
+  warrantyMonths: number
+  usesSavicoContract: boolean
+  hasConstructionInsurance: boolean
+  cooperationRank: number
+  cooperationPercent: number
+  complaintCount: number
 }
 
 /** Một nhà thầu — dùng chung cho thẻ danh sách, bảng so sánh và hồ sơ. */
@@ -208,6 +249,9 @@ export interface Contractor {
   warrantyMonths: number
   legalChecks: string[]
   featuredProjects: ContractorProject[]
+  /** Số dự án SAVICO đã đối chiếu ảnh thực tế và biên bản nghiệm thu. */
+  verifiedProjects: number
+  legalProfile?: ContractorLegalProfile
   partnership: ContractorPartnership
 }
 

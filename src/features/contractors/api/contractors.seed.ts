@@ -40,12 +40,48 @@ export const CONTRACTORS_SEED: readonly Contractor[] = [
       'Bảo hiểm công trình',
       'Cam kết bảo hành 24 tháng'
     ],
+    legalProfile: {
+      legalName: 'Công ty TNHH Xây dựng ABC Construction',
+      taxCodeMasked: '6001•••••3',
+      establishedAt: '2016-03-14',
+      operationYears: 10,
+      representative: 'Ông Nguyễn Văn A',
+      representativeTitle: 'Giám đốc',
+      registeredAddress: '12 Nguyễn Tất Thành, P. Tân Lợi, TP. Buôn Ma Thuột, Đắk Lắk',
+      primaryBusiness: 'Xây dựng nhà để ở (mã 4101) · Hoàn thiện công trình (4330)',
+      workforce: '32 kiến trúc sư & kỹ sư · khoảng 120 công nhân',
+      registrationNumberMasked: '6001•••••3',
+      registrationIssuedAt: '2016-03-14',
+      registrationStatus: 'verified',
+      verifiedAt: '2026-09-12',
+      verifiedUntil: '2026-08-12',
+      warrantyMonths: 24,
+      usesSavicoContract: true,
+      hasConstructionInsurance: true,
+      cooperationRank: 24,
+      cooperationPercent: 96,
+      complaintCount: 0
+    },
+    verifiedProjects: 12,
     featuredProjects: [
       {
         id: 'p1',
         name: 'Nhà phố Nguyễn Văn Linh',
-        year: 2023,
+        year: 2025,
         imageUrl: BUILDING_IMAGE.townhouse,
+        verified: true,
+        category: 'house',
+        areaM2: 100,
+        dimensions: '5×20m',
+        scale: 'Trệt + 2 lầu',
+        location: 'P. Tân An, TP. Buôn Ma Thuột',
+        constructionScope: 'turnkey',
+        contractorRole: 'general-contractor',
+        constructionMonths: 5,
+        constructionStartedAt: '2025-03-01',
+        constructionEndedAt: '2025-08-01',
+        mainItems: 'Móng băng, khung BTCT, hoàn thiện nội thất, hệ thống điện nước',
+        verifiedAt: '2026-08-12',
         tags: ['Nhà phố', 'Thi công trọn gói', 'Hoàn thiện']
       },
       {
@@ -53,6 +89,12 @@ export const CONTRACTORS_SEED: readonly Contractor[] = [
         name: 'Nhà phố Tân Quy',
         year: 2024,
         imageUrl: BUILDING_IMAGE.roofed,
+        verified: true,
+        category: 'house',
+        areaM2: 81,
+        dimensions: '4,5×18m',
+        scale: 'Trệt + 1 lầu',
+        location: 'P. Tân Lợi, TP. Buôn Ma Thuột',
         tags: ['Nhà phố', 'Phần thô', 'Hoàn thiện']
       },
       {
@@ -60,7 +102,187 @@ export const CONTRACTORS_SEED: readonly Contractor[] = [
         name: 'Cải tạo nhà Hòa Bình',
         year: 2023,
         imageUrl: BUILDING_IMAGE.apartment,
+        verified: true,
+        category: 'renovation',
+        areaM2: 120,
+        scale: 'Trệt + 1 lầu',
+        location: 'P. Thành Công, TP. Buôn Ma Thuột',
         tags: ['Thi công trọn gói', 'Hoàn thiện']
+      },
+      {
+        id: 'p4',
+        name: 'Biệt thự vườn Ea Tu',
+        year: 2025,
+        imageUrl: BUILDING_IMAGE.garden,
+        verified: true,
+        category: 'villa',
+        areaM2: 450,
+        scale: '2 tầng',
+        location: 'Xã Ea Tu, TP. Buôn Ma Thuột',
+        tags: ['Biệt thự', 'Trọn gói']
+      },
+      {
+        id: 'p5',
+        name: 'Nhà phố Lê Duẩn',
+        year: 2024,
+        verified: false,
+        category: 'house',
+        areaM2: 110,
+        dimensions: '5×22m',
+        scale: 'Trệt + 3 lầu',
+        location: 'P. Tân Thành, TP. Buôn Ma Thuột',
+        tags: ['Nhà phố', 'Phần thô']
+      },
+      {
+        id: 'p6',
+        name: 'Nhà xưởng Cư M’gar',
+        year: 2023,
+        verified: true,
+        category: 'factory',
+        areaM2: 800,
+        scale: '1 tầng',
+        location: 'Huyện Cư M’gar, Đắk Lắk',
+        tags: ['Nhà xưởng', 'Trọn gói']
+      },
+      {
+        id: 'p7',
+        name: 'Nhà phố Phan Chu Trinh',
+        year: 2025,
+        imageUrl: BUILDING_IMAGE.townhouse,
+        verified: true,
+        category: 'house',
+        areaM2: 96,
+        dimensions: '4,8×20m',
+        scale: 'Trệt + 2 lầu',
+        location: 'P. Thắng Lợi, TP. Buôn Ma Thuột',
+        tags: ['Nhà phố', 'Trọn gói']
+      },
+      {
+        id: 'p8',
+        name: 'Biệt thự Tân An',
+        year: 2025,
+        imageUrl: BUILDING_IMAGE.villa,
+        verified: true,
+        category: 'villa',
+        areaM2: 320,
+        scale: '2 tầng',
+        location: 'P. Tân An, TP. Buôn Ma Thuột',
+        tags: ['Biệt thự', 'Hoàn thiện']
+      },
+      {
+        id: 'p9',
+        name: 'Cải tạo nhà Y Jút',
+        year: 2024,
+        imageUrl: BUILDING_IMAGE.apartment,
+        verified: true,
+        category: 'renovation',
+        areaM2: 85,
+        scale: 'Trệt + 1 lầu',
+        location: 'P. Tân Lập, TP. Buôn Ma Thuột',
+        tags: ['Cải tạo', 'Hoàn thiện']
+      },
+      {
+        id: 'p10',
+        name: 'Nhà phố Ama Khê',
+        year: 2024,
+        verified: true,
+        category: 'house',
+        areaM2: 90,
+        dimensions: '5×18m',
+        scale: 'Trệt + 2 lầu',
+        location: 'P. Tự An, TP. Buôn Ma Thuột',
+        tags: ['Nhà phố', 'Phần thô']
+      },
+      {
+        id: 'p11',
+        name: 'Biệt thự hồ Ea Kao',
+        year: 2024,
+        imageUrl: BUILDING_IMAGE.garden,
+        verified: true,
+        category: 'villa',
+        areaM2: 380,
+        scale: '2 tầng',
+        location: 'Xã Ea Kao, TP. Buôn Ma Thuột',
+        tags: ['Biệt thự', 'Trọn gói']
+      },
+      {
+        id: 'p12',
+        name: 'Nhà phố Lý Thường Kiệt',
+        year: 2023,
+        imageUrl: BUILDING_IMAGE.roofed,
+        verified: true,
+        category: 'house',
+        areaM2: 105,
+        dimensions: '5×21m',
+        scale: 'Trệt + 2 lầu',
+        location: 'P. Thống Nhất, TP. Buôn Ma Thuột',
+        tags: ['Nhà phố', 'Hoàn thiện']
+      },
+      {
+        id: 'p13',
+        name: 'Nhà xưởng Hòa Phú',
+        year: 2023,
+        verified: true,
+        category: 'factory',
+        areaM2: 1200,
+        scale: '1 tầng',
+        location: 'KCN Hòa Phú, TP. Buôn Ma Thuột',
+        tags: ['Nhà xưởng', 'Phần thô']
+      },
+      {
+        id: 'p14',
+        name: 'Nhà phố Hà Huy Tập',
+        year: 2023,
+        category: 'house',
+        areaM2: 100,
+        dimensions: '5×20m',
+        scale: 'Trệt + 1 lầu',
+        location: 'P. Tân Lợi, TP. Buôn Ma Thuột',
+        tags: ['Nhà phố', 'Trọn gói']
+      },
+      {
+        id: 'p15',
+        name: 'Biệt thự Cư Êbur',
+        year: 2022,
+        imageUrl: BUILDING_IMAGE.villa,
+        category: 'villa',
+        areaM2: 410,
+        scale: '2 tầng',
+        location: 'Xã Cư Êbur, TP. Buôn Ma Thuột',
+        tags: ['Biệt thự', 'Phần thô']
+      },
+      {
+        id: 'p16',
+        name: 'Cải tạo nhà Lê Thánh Tông',
+        year: 2022,
+        category: 'renovation',
+        areaM2: 72,
+        scale: 'Trệt + 1 lầu',
+        location: 'P. Tân Lợi, TP. Buôn Ma Thuột',
+        tags: ['Cải tạo', 'Hoàn thiện']
+      },
+      {
+        id: 'p17',
+        name: 'Nhà phố Trần Nhật Duật',
+        year: 2022,
+        imageUrl: BUILDING_IMAGE.townhouse,
+        category: 'house',
+        areaM2: 88,
+        dimensions: '4,4×20m',
+        scale: 'Trệt + 2 lầu',
+        location: 'P. Tân Thành, TP. Buôn Ma Thuột',
+        tags: ['Nhà phố', 'Trọn gói']
+      },
+      {
+        id: 'p18',
+        name: 'Nhà phố Nguyễn Chí Thanh',
+        year: 2021,
+        category: 'house',
+        areaM2: 95,
+        dimensions: '5×19m',
+        scale: 'Trệt + 2 lầu',
+        location: 'P. Tân An, TP. Buôn Ma Thuột',
+        tags: ['Nhà phố', 'Phần thô']
       }
     ],
     partnership: {
@@ -94,6 +316,7 @@ export const CONTRACTORS_SEED: readonly Contractor[] = [
     officeAddress: 'TP. Buôn Ma Thuột, Đắk Lắk',
     warrantyMonths: 18,
     legalChecks: ['Giấy phép kinh doanh đã xác minh', 'Đội ngũ kỹ sư phụ trách', 'Cam kết bảo hành'],
+    verifiedProjects: 9,
     featuredProjects: [
       {
         id: 'p1',
@@ -141,6 +364,7 @@ export const CONTRACTORS_SEED: readonly Contractor[] = [
     officeAddress: 'TP. Buôn Ma Thuột, Đắk Lắk',
     warrantyMonths: 24,
     legalChecks: ['Giấy phép kinh doanh đã xác minh', 'Đội ngũ kỹ sư phụ trách', 'Bảo hiểm công trình'],
+    verifiedProjects: 8,
     featuredProjects: [
       {
         id: 'p1',
@@ -193,6 +417,7 @@ export const CONTRACTORS_SEED: readonly Contractor[] = [
       'Bảo hiểm công trình',
       'Cam kết bảo hành'
     ],
+    verifiedProjects: 6,
     featuredProjects: [
       {
         id: 'p1',
@@ -233,6 +458,7 @@ export const CONTRACTORS_SEED: readonly Contractor[] = [
     officeAddress: 'Krông Pắc, Đắk Lắk',
     warrantyMonths: 12,
     legalChecks: ['Giấy phép kinh doanh đã xác minh', 'Cam kết bảo hành'],
+    verifiedProjects: 4,
     featuredProjects: [
       {
         id: 'p1',
