@@ -2877,7 +2877,8 @@
       "ground": "Ground floor",
       "ground+1": "Ground + 1",
       "ground+2": "Ground + 2",
-      "ground+3": "Ground + 3"
+      "ground+3": "Ground + 3",
+      "ground+4": "Ground + 4"
     },
     "startWindow": {
       "asap": "As soon as possible",
@@ -2977,6 +2978,8 @@
         "title": "Transparent comparison",
         "criterion": "Criterion",
         "note": "All information is compiled from contractor records and details supplied by the contractor.",
+        "betterBadge": "Better",
+        "swipeHint": "Swipe sideways to see all 3 columns",
         "columns": {
           "a": "Contractor A",
           "b": "Contractor B",
@@ -3013,6 +3016,22 @@
             "b": "–",
             "c": "–"
           }
+        },
+        "scopeDetail": {
+          "includedLabel": "Included",
+          "excludedLabel": "Not included",
+          "a": {
+            "included": ["Demolition of existing structure", "Structural work", "Basic finishing"],
+            "excluded": ["Loose furniture", "Kitchen appliances"]
+          },
+          "b": {
+            "included": ["Demolition of existing structure", "Structural work", "Paint finishing"],
+            "excluded": ["Loose furniture", "Premium bathroom fixtures"]
+          },
+          "c": {
+            "included": ["Demolition of existing structure", "Structural work", "Finishing + basic furniture"],
+            "excluded": ["Premium kitchen appliances"]
+          }
         }
       },
       "safety": {
@@ -3028,9 +3047,11 @@
         "title": "Where each service stops",
         "designTitle": "Design package",
         "designBody": "Design + estimated quantities + cost estimate",
+        "designReadyBadge": "✓ You already have a PRO plan · brief ready",
         "arrow": "Design finished\n→ Find a contractor",
         "findTitle": "Find a contractor",
-        "findBody": "Find who builds it + site visit + real reviews + comparison"
+        "findBody": "Find who builds it + site visit + real reviews + comparison",
+        "createFromPlan": "Create a brief from your plan"
       },
       "faq": {
         "title": "Frequently asked questions",
@@ -3039,11 +3060,13 @@
         "q2": "What do I need to start?",
         "a2": "Just basic details about the build and what you need done. You can create a brief for free without buying a package.",
         "q3": "How many contractors can I invite?",
-        "a3": "Up to 3 per project. The cap keeps every survey trackable instead of flooding you with calls.",
+        "a3": "Up to <mark>3 contractors</mark> per project. The cap keeps every survey trackable instead of flooding you with calls.",
         "q4": "Can I see quotes on the website?",
         "a4": "No. After the survey the contractor sends the quote to you directly; SAVICO neither stores nor displays any amounts.",
         "q5": "Does SAVICO do the building work?",
-        "a5": "No. SAVICO is a neutral connection platform — we neither build nor sell materials."
+        "a5": "No. SAVICO is a neutral connection platform — we neither build nor sell materials.",
+        "copyLink": "Copy link",
+        "linkCopied": "Copied"
       },
       "cta": {
         "title": "Already have a design? Create a brief and get matched with the right contractors.",
@@ -3051,7 +3074,21 @@
       },
       "partner": {
         "text": "Are you a contractor? Get quality, transparent, well-matched projects.",
-        "action": "Become a partner"
+        "action": "Become a partner",
+        "dialogTitle": "Register as a partner",
+        "dialogDescription": "Leave your details and the SAVICO team will contact you with guidance for completing your contractor profile.",
+        "name": "Contractor name",
+        "namePlaceholder": "e.g. An Phat Construction",
+        "phone": "Phone number",
+        "phonePlaceholder": "e.g. 0905 123 456",
+        "email": "Email",
+        "emailPlaceholder": "e.g. contact@anphat.com",
+        "emailHint": "Updates and next steps will be sent to this email address.",
+        "cancel": "Close",
+        "submit": "Submit registration",
+        "successTitle": "Registration received",
+        "successBody": "SAVICO will send updates and next steps to {email}.",
+        "close": "Done"
       }
     },
     "brief": {
@@ -3081,7 +3118,10 @@
         "landArea": "Land area (m²)",
         "areaSuffix": "m²",
         "condition": "Site condition",
-        "scale": "Scale",
+        "scale": "Floors",
+        "attic": "Attic",
+        "atticYes": "With attic",
+        "atticNo": "No attic",
         "address": "Site address",
         "province": "Province / City",
         "ward": "Ward",
@@ -3288,6 +3328,66 @@
       "featured": "Featured projects",
       "viewProject": "View project",
       "legalTitle": "Capability & verification",
+      "legal": {
+        "updating": "Being updated",
+        "verification": {
+          "title": "SAVICO has verified this contractor's business licence",
+          "body": "Checked against the original during the assessment on {date}. If the licence changes or is revoked, the contractor is hidden from recommendations until it is updated.",
+          "updated": "Updated"
+        },
+        "identity": {
+          "title": "Legal entity information",
+          "active": "Business registration matched",
+          "pending": "Verification pending"
+        },
+        "fields": {
+          "legalName": "Legal name",
+          "taxCode": "Tax code",
+          "taxCodeHint": "shown in full after you send an invitation to quote",
+          "establishedAt": "Established",
+          "representative": "Representative",
+          "registeredAddress": "Registered office",
+          "primaryBusiness": "Primary business",
+          "capacity": "Workforce"
+        },
+        "establishedValue": "{date} · {years} years in operation",
+        "license": {
+          "title": "Business licence",
+          "verified": "Verified",
+          "documentTitle": "Enterprise registration certificate",
+          "documentMatch": "The enterprise number matches the tax code.",
+          "issuer": "Dak Lak Department of Planning & Investment",
+          "number": "Number",
+          "issuedAt": "Effective",
+          "effectiveValue": "{date} → No expiry",
+          "view": "View",
+          "privacy": "The enterprise number is partially hidden. The full scan is unlocked after you send this contractor an invitation to quote.",
+          "dialogTitle": "Verified licence information",
+          "dialogBody": "SAVICO shows a summary and redacts sensitive data before both parties connect.",
+          "lockedTitle": "The scan unlocks after an invitation to quote",
+          "lockedBody": "SAVICO checked the original on {date}. After you send an invitation to quote, the full scan appears here and in the invitation screen.",
+          "scanUnlocked": "The licence scan is unlocked",
+          "status": "Status",
+          "close": "Close"
+        },
+        "commitments": {
+          "title": "Commitments & warranty",
+          "warrantyTitle": "{months}-month structural warranty",
+          "warrantyBody": "12-month finishing warranty · equipment covered by manufacturers",
+          "contractTitle": "SAVICO contract template",
+          "contractBody": "Each stage is accepted with records and site photos",
+          "insuranceTitle": "Construction insurance",
+          "insuranceBody": "Applied to every turnkey construction contract",
+          "updating": "SAVICO is updating this information"
+        },
+        "cooperation": {
+          "title": "SAVICO cooperation",
+          "verified": "Verified partner",
+          "since": "Partner since {since}",
+          "rank": "Good response within {rank}h ({percent}%)",
+          "complaints": "{count} complaints on SAVICO"
+        }
+      },
       "activity": "Activity",
       "warranty": "{months}-month warranty",
       "contactLocked": "Contact details unlock once a survey appointment is confirmed.",
@@ -3304,6 +3404,70 @@
       "viewInvites": "View invitations",
       "notAcceptingNotice": "This contractor is temporarily not accepting new projects.",
       "viewSimilar": "View similar contractors",
+      "projects": {
+        "projectCount": "{count} projects",
+        "verifiedSummary": "{count} verified by SAVICO using site photos and acceptance records",
+        "verifiedOnly": "Verified projects only",
+        "sortLabel": "Sort projects",
+        "sortLatest": "Newest",
+        "sortOldest": "Oldest",
+        "filterLabel": "Filter by project type",
+        "filters": {
+          "all": "All {count}",
+          "house": "Houses {count}",
+          "villa": "Villas {count}",
+          "renovation": "Renovations {count}",
+          "factory": "Factories {count}"
+        },
+        "verifiedBadge": "Verified",
+        "area": "{area} m²",
+        "completed": "Completed {year}",
+        "viewDetail": "View details",
+        "showMore": "View {count} more projects",
+        "disclaimer": "Projects show construction scale, scope and timeline - contract values are not displayed.",
+        "empty": "No projects match these filters.",
+        "detail": {
+          "description": "Project details delivered by {contractor}",
+          "imageAlt": "Image {index} of project {project}",
+          "selectImage": "Show image {index} as the large image",
+          "verifiedBadge": "Verified",
+          "title": "Project information",
+          "projectType": "Project type",
+          "scale": "Scale",
+          "constructionScope": "Construction scope",
+          "role": "Role",
+          "constructionPeriod": "Construction period",
+          "location": "Location",
+          "mainItems": "Main items",
+          "area": "{area} m²",
+          "constructionPeriodValue": "{months} months ({from} - {to})",
+          "completedYear": "Completed {year}",
+          "notUpdated": "Being updated",
+          "mainItemsFallback": "Construction work based on the supplied project records.",
+          "projectTypes": {
+            "house": "Townhouse",
+            "villa": "Villa",
+            "renovation": "Renovation",
+            "factory": "Factory"
+          },
+          "constructionScopes": {
+            "turnkey": "Turnkey",
+            "structural": "Structural work",
+            "finishing": "Finishing"
+          },
+          "roles": {
+            "general-contractor": "General contractor",
+            "contractor": "Construction contractor"
+          },
+          "verifiedTitle": "Verified by SAVICO on {date}",
+          "verifiedDateFallback": "date being updated",
+          "verifiedBody": "Checked against on-site photos and the acceptance record signed by the homeowner.",
+          "selfReportedTitle": "Contractor-supplied information",
+          "selfReportedBody": "SAVICO has not checked this project against site photos and acceptance records.",
+          "priceNotice": "Contract values and unit prices are not shown - SAVICO does not store or publish pricing information.",
+          "close": "Close"
+        }
+      },
       "partnership": {
         "title": "SAVICO partner",
         "body": "{name} has signed a partnership agreement and had its company records verified by SAVICO.",

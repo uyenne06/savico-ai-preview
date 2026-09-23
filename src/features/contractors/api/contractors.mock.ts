@@ -13,7 +13,7 @@ import type {
   SurveyRequest,
   SurveySlot
 } from '../types/contractor.types'
-import type { SaveBriefPayload, SurveyRequestDetail } from './contractors.api'
+import type { CreateBriefFromDesignPayload, SaveBriefPayload, SurveyRequestDetail } from './contractors.api'
 import { BRIEFS_SEED } from './briefs.seed'
 import { CONTRACTORS_SEED } from './contractors.seed'
 
@@ -157,6 +157,26 @@ export const mockContractorsApi = {
     const now = new Date().toISOString()
     const brief: ProjectBrief = {
       ...emptyBrief(),
+      id: nextProjectId(store),
+      status: 'ready',
+      createdAt: now,
+      updatedAt: now
+    }
+    store.briefs[brief.id] = brief
+    saveStore(store)
+    return brief
+  },
+
+  createBriefFromDesign: async (payload: CreateBriefFromDesignPayload): Promise<ProjectBrief> => {
+    await mockDelay(250)
+    const store = loadStore()
+    const now = new Date().toISOString()
+    const brief: ProjectBrief = {
+      ...emptyBrief(),
+      name: payload.name,
+      buildingType: payload.buildingType,
+      landArea: payload.landArea,
+      selfCreated: false,
       id: nextProjectId(store),
       status: 'ready',
       createdAt: now,

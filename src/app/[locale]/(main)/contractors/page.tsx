@@ -1,7 +1,7 @@
 import { setRequestLocale } from 'next-intl/server'
 
-import { ContractorLanding } from '@/features/contractors'
 import type { Locale } from '@/i18n/routing'
+import { ContractorLandingClient } from './contractor-landing-client'
 
 interface PageProps {
   params: Promise<{ locale: Locale }>
@@ -12,5 +12,5 @@ export default async function ContractorsPage({ params }: PageProps) {
   const { locale } = await params
   setRequestLocale(locale)
 
-  return <ContractorLanding />
+  return <ContractorLandingClient />
 }

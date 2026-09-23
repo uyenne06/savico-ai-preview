@@ -2877,7 +2877,8 @@
       "ground": "Trệt",
       "ground+1": "Trệt + 1 lầu",
       "ground+2": "Trệt + 2 lầu",
-      "ground+3": "Trệt + 3 lầu"
+      "ground+3": "Trệt + 3 lầu",
+      "ground+4": "Trệt + 4 lầu"
     },
     "startWindow": {
       "asap": "Càng sớm càng tốt",
@@ -2977,6 +2978,8 @@
         "title": "So sánh minh bạch",
         "criterion": "Tiêu chí",
         "note": "Mọi thông tin được tổng hợp từ hồ sơ nhà thầu và thông tin do nhà thầu cung cấp.",
+        "betterBadge": "Tốt hơn",
+        "swipeHint": "Vuốt ngang để xem đủ 3 cột",
         "columns": {
           "a": "Nhà thầu A",
           "b": "Nhà thầu B",
@@ -3013,6 +3016,22 @@
             "b": "–",
             "c": "–"
           }
+        },
+        "scopeDetail": {
+          "includedLabel": "Bao gồm",
+          "excludedLabel": "Không bao gồm",
+          "a": {
+            "included": ["Phá dỡ hiện trạng", "Thi công phần thô", "Hoàn thiện cơ bản"],
+            "excluded": ["Nội thất rời", "Thiết bị bếp"]
+          },
+          "b": {
+            "included": ["Phá dỡ hiện trạng", "Thi công phần thô", "Sơn nước hoàn thiện"],
+            "excluded": ["Nội thất rời", "Thiết bị vệ sinh cao cấp"]
+          },
+          "c": {
+            "included": ["Phá dỡ hiện trạng", "Thi công phần thô", "Hoàn thiện + nội thất cơ bản"],
+            "excluded": ["Thiết bị bếp cao cấp"]
+          }
         }
       },
       "safety": {
@@ -3028,9 +3047,11 @@
         "title": "Ranh giới dịch vụ",
         "designTitle": "Gói thiết kế",
         "designBody": "Thiết kế + khối lượng dự kiến + dự toán",
+        "designReadyBadge": "✓ Bạn đã có gói PRO · hồ sơ sẵn sàng",
         "arrow": "Hoàn thành thiết kế\n→ Tìm nhà thầu",
         "findTitle": "Tìm nhà thầu",
-        "findBody": "Tìm người thực hiện + khảo sát + đánh giá thực tế + so sánh"
+        "findBody": "Tìm người thực hiện + khảo sát + đánh giá thực tế + so sánh",
+        "createFromPlan": "Tạo hồ sơ từ gói"
       },
       "faq": {
         "title": "Câu hỏi thường gặp",
@@ -3039,11 +3060,13 @@
         "q2": "Cần gì để bắt đầu?",
         "a2": "Chỉ cần thông tin cơ bản về công trình và nhu cầu thi công. Bạn có thể tự tạo hồ sơ miễn phí, không cần mua gói.",
         "q3": "Tôi được mời bao nhiêu nhà thầu?",
-        "a3": "Tối đa 3 nhà thầu cho mỗi dự án. Giới hạn này giúp bạn theo dõi được từng buổi khảo sát thay vì nhận quá nhiều liên hệ cùng lúc.",
+        "a3": "Tối đa <mark>3 nhà thầu</mark> cho mỗi dự án. Giới hạn này giúp bạn theo dõi được từng buổi khảo sát thay vì nhận quá nhiều liên hệ cùng lúc.",
         "q4": "Tôi có xem được báo giá trên web không?",
         "a4": "Không. Sau buổi khảo sát, nhà thầu gửi báo giá trực tiếp cho bạn; SAVICO không lưu và không hiển thị số tiền trên nền tảng.",
         "q5": "SAVICO có nhận thi công không?",
-        "a5": "Không. SAVICO là nền tảng kết nối trung lập, không thi công và không bán vật tư."
+        "a5": "Không. SAVICO là nền tảng kết nối trung lập, không thi công và không bán vật tư.",
+        "copyLink": "Sao chép liên kết",
+        "linkCopied": "Đã sao chép"
       },
       "cta": {
         "title": "Đã có hồ sơ thiết kế? Tạo hồ sơ để kết nối với nhà thầu phù hợp ngay.",
@@ -3051,7 +3074,21 @@
       },
       "partner": {
         "text": "Bạn là nhà thầu? Nhận dự án chất lượng, minh bạch và phù hợp.",
-        "action": "Trở thành đối tác"
+        "action": "Trở thành đối tác",
+        "dialogTitle": "Đăng ký trở thành đối tác",
+        "dialogDescription": "Để lại thông tin, đội ngũ SAVICO sẽ liên hệ và hướng dẫn hoàn thiện hồ sơ nhà thầu.",
+        "name": "Tên nhà thầu",
+        "namePlaceholder": "VD: Công ty Xây dựng An Phát",
+        "phone": "Số điện thoại",
+        "phonePlaceholder": "VD: 0905 123 456",
+        "email": "Email",
+        "emailPlaceholder": "VD: lienhe@anphat.vn",
+        "emailHint": "Thông báo và hướng dẫn tiếp theo sẽ được gửi qua email này.",
+        "cancel": "Đóng",
+        "submit": "Gửi đăng ký",
+        "successTitle": "Đã nhận thông tin đăng ký",
+        "successBody": "SAVICO sẽ gửi thông báo và hướng dẫn tiếp theo tới {email}.",
+        "close": "Hoàn tất"
       }
     },
     "brief": {
@@ -3081,7 +3118,10 @@
         "landArea": "Diện tích đất (m²)",
         "areaSuffix": "m²",
         "condition": "Hiện trạng",
-        "scale": "Quy mô",
+        "scale": "Số tầng",
+        "attic": "Tum",
+        "atticYes": "Có tum",
+        "atticNo": "Không tum",
         "address": "Địa chỉ công trình",
         "province": "Tỉnh / Thành phố",
         "ward": "Phường / Xã",
@@ -3288,6 +3328,66 @@
       "featured": "Dự án tiêu biểu",
       "viewProject": "Xem dự án",
       "legalTitle": "Năng lực & xác minh",
+      "legal": {
+        "updating": "Đang cập nhật",
+        "verification": {
+          "title": "SAVICO đã xác minh giấy phép kinh doanh của nhà thầu này",
+          "body": "Đối chiếu bản gốc tại buổi thẩm định {date}. Giấy phép thay đổi hoặc bị thu hồi, nhà thầu tạm ẩn khỏi đề xuất tới khi cập nhật.",
+          "updated": "Cập nhật"
+        },
+        "identity": {
+          "title": "Thông tin pháp nhân",
+          "active": "Khớp đăng ký kinh doanh",
+          "pending": "Đang xác minh"
+        },
+        "fields": {
+          "legalName": "Tên pháp nhân",
+          "taxCode": "Mã số thuế",
+          "taxCodeHint": "hiện đầy đủ sau khi bạn gửi lời mời báo giá",
+          "establishedAt": "Ngày thành lập",
+          "representative": "Người đại diện",
+          "registeredAddress": "Trụ sở",
+          "primaryBusiness": "Ngành nghề chính",
+          "capacity": "Quy mô nhân sự"
+        },
+        "establishedValue": "{date} · hoạt động {years} năm",
+        "license": {
+          "title": "Giấy phép kinh doanh",
+          "verified": "Đã xác minh",
+          "documentTitle": "Giấy chứng nhận đăng ký doanh nghiệp",
+          "documentMatch": "Mã số doanh nghiệp trùng khớp với mã số thuế.",
+          "issuer": "Sở Kế hoạch & Đầu tư Đắk Lắk",
+          "number": "Số hiệu",
+          "issuedAt": "Hiệu lực",
+          "effectiveValue": "{date} → Không thời hạn",
+          "view": "Xem",
+          "privacy": "Mã số doanh nghiệp được che một phần. Bản scan đầy đủ chỉ mở sau khi bạn gửi lời mời báo giá tới nhà thầu này.",
+          "dialogTitle": "Thông tin giấy phép đã xác minh",
+          "dialogBody": "SAVICO hiển thị bản tóm tắt và che dữ liệu nhạy cảm trước khi hai bên kết nối.",
+          "lockedTitle": "Bản scan mở khóa sau khi mời báo giá",
+          "lockedBody": "SAVICO đã đối chiếu bản gốc ngày {date}. Sau khi bạn gửi lời mời báo giá, bản scan đầy đủ hiển thị tại đây và trong màn Lời mời báo giá.",
+          "scanUnlocked": "Bản scan giấy phép đã mở khóa",
+          "status": "Trạng thái",
+          "close": "Đóng"
+        },
+        "commitments": {
+          "title": "Cam kết & bảo hành",
+          "warrantyTitle": "Bảo hành kết cấu {months} tháng",
+          "warrantyBody": "Hoàn thiện 12 tháng · thiết bị theo hãng",
+          "contractTitle": "Hợp đồng theo mẫu SAVICO",
+          "contractBody": "Nghiệm thu từng giai đoạn có biên bản, ảnh hiện trạng",
+          "insuranceTitle": "Bảo hiểm công trình",
+          "insuranceBody": "Áp dụng mỗi hợp đồng thi công trọn gói",
+          "updating": "Thông tin đang được SAVICO cập nhật"
+        },
+        "cooperation": {
+          "title": "Hợp tác với SAVICO",
+          "verified": "Đối tác đã xác minh",
+          "since": "Hợp tác từ {since}",
+          "rank": "Phản hồi tốt mỗi vòng {rank}h (đạt {percent}%)",
+          "complaints": "{count} khiếu nại trên SAVICO"
+        }
+      },
       "activity": "Thông tin hoạt động",
       "warranty": "Bảo hành {months} tháng",
       "contactLocked": "Thông tin liên hệ được mở sau khi lịch khảo sát được xác nhận.",
@@ -3304,6 +3404,70 @@
       "viewInvites": "Xem lời mời",
       "notAcceptingNotice": "Nhà thầu đang tạm ngưng nhận dự án mới.",
       "viewSimilar": "Xem nhà thầu tương tự",
+      "projects": {
+        "projectCount": "{count} dự án",
+        "verifiedSummary": "{count} được SAVICO xác minh qua ảnh thực tế & biên bản nghiệm thu",
+        "verifiedOnly": "Chỉ dự án đã xác minh",
+        "sortLabel": "Sắp xếp dự án",
+        "sortLatest": "Mới nhất",
+        "sortOldest": "Cũ nhất",
+        "filterLabel": "Lọc theo loại dự án",
+        "filters": {
+          "all": "Tất cả {count}",
+          "house": "Nhà riêng {count}",
+          "villa": "Biệt thự {count}",
+          "renovation": "Cải tạo {count}",
+          "factory": "Nhà xưởng {count}"
+        },
+        "verifiedBadge": "Đã xác minh",
+        "area": "{area} m²",
+        "completed": "Hoàn thành {year}",
+        "viewDetail": "Xem chi tiết",
+        "showMore": "Xem thêm {count} dự án",
+        "disclaimer": "Dự án hiển thị quy mô, phạm vi và thời gian thi công - không hiển thị giá trị hợp đồng.",
+        "empty": "Không có dự án phù hợp với bộ lọc này.",
+        "detail": {
+          "description": "Chi tiết dự án do {contractor} thực hiện",
+          "imageAlt": "Ảnh {index} của dự án {project}",
+          "selectImage": "Chọn ảnh {index} làm ảnh lớn",
+          "verifiedBadge": "Đã xác minh",
+          "title": "Thông tin công trình",
+          "projectType": "Loại công trình",
+          "scale": "Quy mô",
+          "constructionScope": "Phạm vi thi công",
+          "role": "Vai trò",
+          "constructionPeriod": "Thời gian thi công",
+          "location": "Địa điểm",
+          "mainItems": "Hạng mục chính",
+          "area": "{area} m²",
+          "constructionPeriodValue": "{months} tháng ({from} - {to})",
+          "completedYear": "Hoàn thành {year}",
+          "notUpdated": "Đang cập nhật",
+          "mainItemsFallback": "Thi công các hạng mục theo hồ sơ công trình đã cung cấp.",
+          "projectTypes": {
+            "house": "Nhà phố",
+            "villa": "Biệt thự",
+            "renovation": "Cải tạo",
+            "factory": "Nhà xưởng"
+          },
+          "constructionScopes": {
+            "turnkey": "Trọn gói",
+            "structural": "Phần thô",
+            "finishing": "Hoàn thiện"
+          },
+          "roles": {
+            "general-contractor": "Tổng thầu",
+            "contractor": "Nhà thầu thi công"
+          },
+          "verifiedTitle": "SAVICO đã xác minh ngày {date}",
+          "verifiedDateFallback": "đang cập nhật",
+          "verifiedBody": "Đối chiếu ảnh thực tế tại công trình và biên bản nghiệm thu có chữ ký chủ nhà.",
+          "selfReportedTitle": "Thông tin do nhà thầu tự khai",
+          "selfReportedBody": "SAVICO chưa đối chiếu dự án này với ảnh hiện trường và biên bản nghiệm thu.",
+          "priceNotice": "Không hiển thị giá trị hợp đồng hay đơn giá - SAVICO không lưu và không công bố thông tin giá.",
+          "close": "Đóng"
+        }
+      },
       "partnership": {
         "title": "Đối tác hợp tác cùng SAVICO",
         "body": "{name} đã ký thỏa thuận hợp tác và được SAVICO xác minh hồ sơ doanh nghiệp.",

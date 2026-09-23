@@ -99,13 +99,26 @@ function Req() {
 
 /**
  * Thứ tự các trường bắt buộc THẬT SỰ có thể lỗi (đúng thứ tự đọc trên trang) —
- * `siteCondition`/`scale`/`scope` luôn có giá trị mặc định nên schema không
- * bao giờ báo lỗi ở đó. Dùng để tìm "ô thiếu đầu tiên" khi bấm "Tiếp tục" lúc
- * còn thiếu (mục 7).
+ * Các trường luôn hiện trên form; `scale`/`hasAttic` được xếp riêng trong
+ * `VALIDATION_FIELD_ORDER` vì chỉ bắt buộc với loại nhà. Dùng để tính tiến độ
+ * và tìm "ô thiếu đầu tiên" khi bấm "Tiếp tục" (mục 7).
  */
 const REQUIRED_FIELD_ORDER = [
   'name',
   'buildingType',
+  'landArea',
+  'provinceCode',
+  'wardCode',
+  'street',
+  'budget',
+  'scopeNote'
+] as const satisfies readonly (keyof BriefFormValues)[]
+
+const VALIDATION_FIELD_ORDER = [
+  'name',
+  'buildingType',
+  'scale',
+  'hasAttic',
   'landArea',
   'provinceCode',
   'wardCode',
@@ -222,12 +235,16 @@ export function BriefForm({ projectId }: BriefFormProps) {
 
   const form = useForm<BriefFormValues>({
     resolver: zodResolver(schema),
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
     defaultValues: {
       name: '',
       buildingType: '',
+      buildingTypeId: null,
       landArea: '',
       siteCondition: 'empty',
-      scale: 'ground+1',
+      scale: null,
+      hasAttic: null,
       provinceCode: '',
       wardCode: '',
       street: '',
@@ -257,7 +274,7 @@ export function BriefForm({ projectId }: BriefFormProps) {
    */
   const loadedRef = useRef<string | null>(null)
   useEffect(() => {
-    if (!brief || loadedRef.current === brief.updatedAt) return
+    if (!brief || buildingTypes.length === 0 || loadedRef.current === brief.updatedAt) return
     // Autosave cập nhật cache ngay khi người dùng vừa rời ô. Không reset lại
     // toàn form trong lúc họ đang nhập ô kế tiếp vì có thể làm mất ký tự mới.
     if (loadedRef.current && form.formState.isDirty) {
@@ -269,9 +286,11 @@ export function BriefForm({ projectId }: BriefFormProps) {
     form.reset({
       name: brief.name,
       buildingType: brief.buildingType,
+      buildingTypeId: buildingTypes.find((option) => option.label === brief.buildingType)?.id ?? null,
       landArea: brief.landArea ? String(brief.landArea) : '',
       siteCondition: brief.siteCondition,
       scale: brief.scale,
+      hasAttic: brief.hasAttic ?? null,
       provinceCode: brief.address.provinceCode ? String(brief.address.provinceCode) : '',
       wardCode: brief.address.wardCode ? String(brief.address.wardCode) : '',
       street: brief.address.street,
@@ -280,7 +299,7 @@ export function BriefForm({ projectId }: BriefFormProps) {
       scope: brief.scope,
       scopeNote: brief.scopeNote
     })
-  }, [brief, form, locale])
+  }, [brief, buildingTypes, form, locale])
 
   // Con trỏ tự vào "Tên dự án" khi mở một hồ sơ TRẮNG (mục 4) — hồ sơ đã có
   // sẵn tên thì để yên, không cướp tiêu điểm của khách đang đọc lại. Chỉ làm
@@ -315,9 +334,13 @@ export function BriefForm({ projectId }: BriefFormProps) {
   /** "Đã lưu nháp - 12:01" hiện cạnh tiêu đề rồi mờ đi (mục 2). */
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null)
   const lastSavedPayload = useRef<string | null>(null)
+  const submitIntent = useRef(false)
   const handleFormBlur = (event: React.FocusEvent<HTMLFormElement>) => {
     const nextTarget = event.relatedTarget
-    if (nextTarget instanceof HTMLElement && nextTarget.closest('[data-brief-navigation], [data-brief-submit]')) {
+    if (
+      submitIntent.current ||
+      (nextTarget instanceof HTMLElement && nextTarget.closest('[data-brief-navigation], [data-brief-submit]'))
+    ) {
       return
     }
     if (!form.formState.isDirty) return
@@ -371,6 +394,9 @@ export function BriefForm({ projectId }: BriefFormProps) {
   const scope = form.watch('scope')
   const siteCondition = form.watch('siteCondition')
   const scale = form.watch('scale')
+  const hasAttic = form.watch('hasAttic')
+  const buildingTypeId = form.watch('buildingTypeId')
+  const showScaleFields = Boolean(buildingTypeId && buildingTypeId !== 'apartment')
   const filledRequiredCount = [
     nameVal,
     buildingTypeVal,
@@ -381,10 +407,12 @@ export function BriefForm({ projectId }: BriefFormProps) {
     budgetVal,
     scopeNoteVal
   ].filter(Boolean).length
-  const requiredFilled = filledRequiredCount === REQUIRED_FIELD_ORDER.length
+  const conditionalRequiredCount = showScaleFields ? Number(Boolean(scale)) + Number(hasAttic !== null) : 0
+  const requiredFilled =
+    filledRequiredCount === REQUIRED_FIELD_ORDER.length && (!showScaleFields || conditionalRequiredCount === 2)
   const progressFilledCount =
-    filledRequiredCount + Number(Boolean(siteCondition)) + Number(Boolean(scale)) + Number(Boolean(scope))
-  const requiredProgress = progressFilledCount / (REQUIRED_FIELD_ORDER.length + 3)
+    filledRequiredCount + Number(Boolean(siteCondition)) + Number(Boolean(scope)) + conditionalRequiredCount
+  const requiredProgress = progressFilledCount / (REQUIRED_FIELD_ORDER.length + 2 + (showScaleFields ? 2 : 0))
   const hasUserData =
     Boolean(
       nameVal || buildingTypeVal || landAreaVal || provinceVal || wardVal || streetVal || budgetVal || scopeNoteVal
@@ -410,7 +438,8 @@ export function BriefForm({ projectId }: BriefFormProps) {
     buildingType: values.buildingType,
     landArea: parseAmount(values.landArea),
     siteCondition: values.siteCondition,
-    scale: values.scale,
+    scale: values.scale ?? 'ground',
+    hasAttic: values.hasAttic,
     address: {
       provinceCode: Number(values.provinceCode),
       provinceName: provinces.find((p) => String(p.code) === values.provinceCode)?.name ?? '',
@@ -426,14 +455,16 @@ export function BriefForm({ projectId }: BriefFormProps) {
     selfCreated: true
   })
 
-  const onSubmit = (values: BriefFormValues) => {
-    save.mutate(toPayload(values), {
-      onSuccess: () => {
-        window.sessionStorage.setItem(BRIEF_STEP_TRANSITION_KEY, projectId)
-        setPageTransition('forward')
-        window.setTimeout(() => router.push(contractorReviewRoute(projectId)), reduceMotion ? 0 : 240)
-      }
-    })
+  const onSubmit = async (values: BriefFormValues) => {
+    submitIntent.current = false
+    try {
+      await save.mutateAsync(toPayload(values))
+      window.sessionStorage.setItem(BRIEF_STEP_TRANSITION_KEY, projectId)
+      setPageTransition('forward')
+      window.setTimeout(() => router.push(contractorReviewRoute(projectId)), reduceMotion ? 0 : 240)
+    } catch {
+      // `useSaveBrief` đã hiển thị thông báo lỗi; giữ người dùng ở lại form để thử lại.
+    }
   }
 
   const navigateBack = () => {
@@ -456,7 +487,8 @@ export function BriefForm({ projectId }: BriefFormProps) {
 
   /** Bấm "Tiếp tục" khi còn thiếu trường bắt buộc (mục 7). */
   const onInvalid = (errors: FieldErrors<BriefFormValues>) => {
-    const firstError = REQUIRED_FIELD_ORDER.find((name) => errors[name])
+    submitIntent.current = false
+    const firstError = VALIDATION_FIELD_ORDER.find((name) => errors[name])
     if (firstError) {
       document.getElementById(`brief-field-${firstError}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       setShakeField(firstError)
@@ -707,7 +739,26 @@ export function BriefForm({ projectId }: BriefFormProps) {
                             rỗng chắc chắn không phải do người dùng chọn: bỏ qua là
                             đúng, và cũng chặn luôn mọi nguồn khác (autofill…) làm
                             điều tương tự. */}
-                          <Select value={field.value} onValueChange={(value) => value && field.onChange(value)}>
+                          <Select
+                            value={field.value}
+                            onValueChange={(value) => {
+                              if (!value) return
+                              const nextType = buildingTypes.find((option) => option.label === value)
+                              const previousTypeId = form.getValues('buildingTypeId')
+
+                              field.onChange(value)
+                              form.setValue('buildingTypeId', nextType?.id ?? null, { shouldDirty: true })
+                              form.clearErrors(['scale', 'hasAttic'])
+
+                              if (nextType?.id === 'apartment') {
+                                form.setValue('scale', 'ground', { shouldDirty: true })
+                                form.setValue('hasAttic', false, { shouldDirty: true })
+                              } else if (!previousTypeId || previousTypeId === 'apartment') {
+                                form.setValue('scale', null, { shouldDirty: true })
+                                form.setValue('hasAttic', null, { shouldDirty: true })
+                              }
+                            }}
+                          >
                             <FormControl>
                               <SelectTrigger className='w-full'>
                                 {/* Nhãn do MÌNH dựng, không để `SelectValue` tự tra.
@@ -816,26 +867,70 @@ export function BriefForm({ projectId }: BriefFormProps) {
                   />
                 </motion.div>
 
-                <motion.div variants={formGroupVariants}>
-                  <FormField
-                    control={form.control}
-                    name='scale'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          {t('site.scale')}
-                          <Req />
-                        </FormLabel>
-                        <ChoiceRow
-                          options={PROJECT_SCALES.map((value) => ({ value, label: tScale(value) }))}
-                          value={field.value}
-                          onChange={field.onChange}
+                <AnimatePresence initial={false}>
+                  {showScaleFields ? (
+                    <motion.div
+                      key='scale-fields'
+                      initial={reduceMotion ? false : { opacity: 0, height: 0, y: -6 }}
+                      animate={{ opacity: 1, height: 'auto', y: 0 }}
+                      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0, y: -6 }}
+                      transition={{ duration: reduceMotion ? 0 : 0.24, ease: revealEase }}
+                      className='space-y-4 overflow-hidden'
+                    >
+                      <ShakeField id='brief-field-scale' active={shakeField === 'scale'}>
+                        <FormField
+                          control={form.control}
+                          name='scale'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('site.scale')}
+                                <Req />
+                              </FormLabel>
+                              <ChoiceRow
+                                options={PROJECT_SCALES.map((value) => ({ value, label: tScale(value) }))}
+                                value={field.value}
+                                onChange={(value) => {
+                                  field.onChange(value)
+                                  form.clearErrors('scale')
+                                }}
+                                className='flex-nowrap overflow-x-auto pb-1'
+                              />
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
+                      </ShakeField>
+
+                      <ShakeField id='brief-field-hasAttic' active={shakeField === 'hasAttic'}>
+                        <FormField
+                          control={form.control}
+                          name='hasAttic'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('site.attic')}
+                                <Req />
+                              </FormLabel>
+                              <ChoiceRow
+                                options={[
+                                  { value: 'yes', label: t('site.atticYes') },
+                                  { value: 'no', label: t('site.atticNo') }
+                                ]}
+                                value={field.value === null ? null : field.value ? 'yes' : 'no'}
+                                onChange={(value) => {
+                                  field.onChange(value === 'yes')
+                                  form.clearErrors('hasAttic')
+                                }}
+                              />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </ShakeField>
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
 
                 <motion.fieldset variants={formGroupVariants} className='space-y-3'>
                   <legend className='text-sm font-medium'>
@@ -1377,12 +1472,21 @@ export function BriefForm({ projectId }: BriefFormProps) {
                 <Button
                   type='submit'
                   data-brief-submit
-                  disabled={save.isPending || pageTransition === 'forward'}
+                  onPointerDownCapture={() => {
+                    submitIntent.current = true
+                  }}
+                  onPointerUpCapture={() => {
+                    submitIntent.current = false
+                  }}
+                  onPointerCancel={() => {
+                    submitIntent.current = false
+                  }}
+                  disabled={form.formState.isSubmitting || pageTransition === 'forward'}
                   className={cn('max-sm:w-full', !requiredFilled && 'opacity-60')}
                 >
-                  {save.isPending ? <LoaderCircle className='size-4 animate-spin' /> : null}
+                  {form.formState.isSubmitting ? <LoaderCircle className='size-4 animate-spin' /> : null}
                   {t('continue')}
-                  {!save.isPending ? <ArrowRight className='size-4' /> : null}
+                  {!form.formState.isSubmitting ? <ArrowRight className='size-4' /> : null}
                 </Button>
               </motion.span>
             </div>
@@ -1407,14 +1511,16 @@ export function BriefForm({ projectId }: BriefFormProps) {
 function ChoiceRow<T extends string>({
   options,
   value,
-  onChange
+  onChange,
+  className
 }: {
   options: { value: T; label: string }[]
-  value: T
+  value: T | null
   onChange: (value: T) => void
+  className?: string
 }) {
   return (
-    <div className='flex flex-wrap gap-2'>
+    <div className={cn('flex flex-wrap gap-2', className)}>
       {options.map((option) => {
         const active = option.value === value
         return (

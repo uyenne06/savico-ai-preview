@@ -15,6 +15,17 @@ import { mockContractorsApi } from './contractors.mock'
 /** Dữ liệu ghi xuống khi lưu Bước 1 (S10). */
 export type SaveBriefPayload = Omit<ProjectBrief, 'id' | 'createdAt' | 'updatedAt' | 'status'>
 
+/**
+ * "Tạo hồ sơ từ gói" (S09, ★ mục 9) — sinh hồ sơ bằng dữ liệu đã có từ dự án
+ * thiết kế, bỏ qua Bước 1 nhập liệu thủ công.
+ */
+export interface CreateBriefFromDesignPayload {
+  designProjectId: string
+  name: string
+  buildingType: string
+  landArea: number
+}
+
 /** Kết quả màn "Đã gửi lời mời" (S17) — một yêu cầu, tối đa 3 lời mời (R1). */
 export interface SurveyRequestDetail {
   request: SurveyRequest
@@ -30,6 +41,8 @@ const ContractorsApi = {
   getContractor: (contractorId: string) => http.get<Contractor>(`/contractors/${contractorId}`),
 
   createBrief: () => http.post<ProjectBrief>('/project-briefs', {}),
+  createBriefFromDesign: (payload: CreateBriefFromDesignPayload) =>
+    http.post<ProjectBrief>('/project-briefs/from-design', payload),
   /** Hồ sơ dự án của tài khoản — nút "Xem nhà thầu" (S09) cần biết đã có hồ sơ chưa. */
   listBriefs: () => http.get<ProjectBrief[]>('/project-briefs'),
 

@@ -59,7 +59,13 @@ export const CONSTRUCTION_SCOPES: readonly ConstructionScope[] = ['turnkey', 'sh
 export const SITE_CONDITIONS: readonly SiteCondition[] = ['empty', 'demolish', 'renovate'] as const
 
 /** Quy mô công trình (S10). */
-export const PROJECT_SCALES: readonly ProjectScale[] = ['ground', 'ground+1', 'ground+2', 'ground+3'] as const
+export const PROJECT_SCALES: readonly ProjectScale[] = [
+  'ground',
+  'ground+1',
+  'ground+2',
+  'ground+3',
+  'ground+4'
+] as const
 
 /** Mốc khởi công dự kiến (S10). */
 export const START_WINDOWS: readonly StartWindow[] = ['asap', 'in-1-3-months', 'in-3-6-months', 'undecided'] as const

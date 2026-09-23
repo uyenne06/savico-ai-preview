@@ -5,9 +5,9 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 import { useRouter } from '@/i18n/navigation'
-import { CONTRACTOR_PREVIEW_ID, contractorBriefRoute } from '@/shared/constants/routes'
+import { CONTRACTOR_PREVIEW_ID, contractorBriefRoute, contractorReviewRoute } from '@/shared/constants/routes'
 import { isApiError } from '@/shared/lib/api'
-import { contractorsApi, type SaveBriefPayload } from '../api/contractors.api'
+import { contractorsApi, type CreateBriefFromDesignPayload, type SaveBriefPayload } from '../api/contractors.api'
 import { contractorKeys } from '../api/contractors.keys'
 
 /**
@@ -57,6 +57,27 @@ export function useCreateBrief() {
     onSuccess: (brief) => {
       queryClient.setQueryData(contractorKeys.brief(brief.id), brief)
       router.push(contractorBriefRoute(brief.id))
+    },
+    onError: (error) => {
+      toast.error(isApiError(error) ? error.message : t('generic'))
+    }
+  })
+}
+
+/**
+ * "Tạo hồ sơ từ gói" ở landing (S09, ★ mục 9) — dựng hồ sơ sẵn từ dự án thiết
+ * kế đã có dự toán, bỏ qua Bước 1 và mở thẳng Bước 2 — Kiểm tra hồ sơ (S11).
+ */
+export function useCreateBriefFromDesign() {
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const t = useTranslations('errors')
+
+  return useMutation({
+    mutationFn: (payload: CreateBriefFromDesignPayload) => contractorsApi.createBriefFromDesign(payload),
+    onSuccess: (brief) => {
+      queryClient.setQueryData(contractorKeys.brief(brief.id), brief)
+      router.push(contractorReviewRoute(brief.id))
     },
     onError: (error) => {
       toast.error(isApiError(error) ? error.message : t('generic'))
